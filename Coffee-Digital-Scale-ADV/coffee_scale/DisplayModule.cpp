@@ -85,60 +85,86 @@ void DisplayModule::showMessage(const String& message, int durationMs) {
 }
 
 // ============================================================
-// 方案 B · 暖咖氛围  —  240×135
-// 配色：深褐 #24140D | 暖金 #D4A574 | 暖白 #F5E6D0
+// 方案 B · 暖咖氛围  —  240×135  修订版（修复重叠与溢出）
 // ============================================================
 // ┌────────────────────────────────────────────────────────┐
-// │      POUR OVER                           [● ○ ○ ○]  │ 0–18
-// │━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│ 18  (粗)
+// │      POUR OVER                        [● ○ ○ ○]      │ 0–18
+// │━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│ 18
 // │                                                        │
-// │                    187.3                               │ 19–68  重量
-// │                    grams                               │ 68–78
-// │━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│ 78  (粗)
-// │  flow            time                                  │ 80–95
-// │  4.2 g/s    01:23                                     │ 95–114
-// │────────────────────────────────────────────────────────│ 114
-// │ ● BREWING         ▁▂▃▅▆▇▆▅▃▂▁                       │ 115–135
+// │                    187.3                               │ 22–62  重量 (font 6, 中心 y=42)
+// │━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│ 64
+// │  flow 4.2 g/s               time 01:23                 │ 68–84  状态栏（单行紧凑）
+// │────────────────────────────────────────────────────────│ 86
+// │ ● BREWING                                              │ 90–98
+// │────────────────────────────────────────────────────────│ 100
+// │  ▁▂▃▅▆▇▆▅▃▂▁▁▂▃▅▆▇▆▅▃▂▁                              │ 102–135 迷你曲线
 // └────────────────────────────────────────────────────────┘
 
 void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* timer, FlowCalculator* flowCalc) {
-    // === 标题栏（仅首次绘制，背景不变）===
+    // === 清除所有动态区域（防止文字残留）===
+    _clearArea(0, 20, SCREEN_WIDTH, 115);  // 清除标题栏以下所有区域
 
-    // === 重量区域（y:19-78）===
-    // 清除重量区域
-    _clearArea(0, 20, SCREEN_WIDTH, 58);
-
-    // 重量数值（font 6 ≈ 48px 大，如果装不下回退 font 4）
     M5.Lcd.setTextColor(COLOR_TEXT, COLOR_BG);
     M5.Lcd.setTextDatum(MC_DATUM);
-
-    // 尝试 font 6 — 如果数字太长（>999g）可能超出屏幕宽度
     M5.Lcd.setTextSize(1);
-    // Font 6 是 48px 高的内置大字体
     char weightStr[10];
     dtostrf(weight, 5, 1, weightStr);
+    M5.Lcd.drawString(weightStr, SCREEN_WIDTH / 2, 42, 6);
 
-    // 计算显示位置：重量数字居中偏上，单位偏下
-    M5.Lcd.drawString(weightStr, SCREEN_WIDTH / 2, 48, 6);
+    // === 粗分隔线（y:64）===
+    M5.Lcd.drawFastHLine(0, 63, SCREEN_WIDTH, COLOR_ACCENT);
+    M5.Lcd.drawFastHLine(0, 64, SCREEN_WIDTH, COLOR_BG_DARK);
 
-    // "grams" 标签小字
-    M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
+    // === 状态栏 — 单行紧凑（y:68-84）===
+    M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG);
     M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
-    M5.Lcd.setTextDatum(MC_DATUM);
-    M5.Lcd.drawString("grams", SCREEN_WIDTH / 2, 68, 2);
+    M5.Lcd.setTextDatum(TL_DATUM);
 
-    // === 粗分隔线（y:78）===
-    M5.Lcd.drawFastHLine(0, 77, SCREEN_WIDTH, COLOR_ACCENT);
-    M5.Lcd.drawFastHLine(0, 78, SCREEN_WIDTH, COLOR_BG_DARK);
+    char line[30];
+    snprintf(line, sizeof(line), "flow %.1f g/s", flowRate);
+    M5.Lcd.drawString(line, 12, 74, 2);
 
-    // === 状态栏（y:79-114）===
-    _drawStatusBar(flowRate, timer);
+    String timeStr = timer->getFormattedTime();
+    M5.Lcd.setTextDatum(TR_DATUM);
+    M5.Lcd.drawString(timeStr, SCREEN_WIDTH - 12, 74, 2);
 
-    // === 状态指示器（y:115-122）===
-    _drawStatusIndicators(timer);
+    // === 分隔线 ===
+    M5.Lcd.drawFastHLine(0, 88, SCREEN_WIDTH, COLOR_DIVIDER);
 
-    // === 迷你曲线（y:122-135）===
-    _drawMiniCurve(flowCalc, 0, 122, SCREEN_WIDTH, 13);
+    // === 状态指示器（y:92-98）===
+    bool running = timer->isRunning();
+    uint16_t ledColor = running ? COLOR_STATUS_ON : COLOR_STATUS_OFF;
+    uint16_t textColor = running ? COLOR_STATUS_ON : COLOR_TEXT_DIM;
+    M5.Lcd.fillCircle(12, 95, 3, ledColor);
+    M5.Lcd.setTextColor(textColor, COLOR_BG);
+    M5.Lcd.setTextDatum(TL_DATUM);
+    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
+    M5.Lcd.drawString(running ? "BREWING" : "STANDBY", 20, 91, 1);
+
+    // === 迷你曲线（y:102-135）===
+    int count = flowCalc->getHistoryCount();
+    if (count >= 2) {
+        float* weights = flowCalc->getWeightHistory();
+        float minW = flowCalc->getWeightMin();
+        float maxW = flowCalc->getWeightMax();
+        float range = maxW - minW;
+        if (range < 5) range = 5;
+        minW -= range * 0.1;
+        maxW += range * 0.1;
+        float yScale = 32 / range;  // h=33px
+
+        int prevX = -1, prevY = -1;
+        for (int i = 0; i < count; i++) {
+            int idx = flowCalc->getChronologicalIndex(i);
+            int px = (i * SCREEN_WIDTH) / count;
+            int py = 102 + 33 - (int)((weights[idx] - minW) * yScale);
+            py = constrain(py, 102, 135);
+            if (prevX >= 0) {
+                M5.Lcd.drawLine(prevX, prevY, px, py, COLOR_ACCENT);
+            }
+            prevX = px; prevY = py;
+        }
+    }
 }
 
 // === 重量曲线页面 ===
@@ -231,6 +257,7 @@ void DisplayModule::_drawSettingsPage() {
     M5.Lcd.setTextDatum(TC_DATUM);
     M5.Lcd.drawString("SETTINGS", SCREEN_WIDTH / 2, 3);
     M5.Lcd.drawFastHLine(0, TITLE_HEIGHT, SCREEN_WIDTH, COLOR_ACCENT);
+    _drawPageIndicator();
 
     // 设置项卡
     M5.Lcd.fillRoundRect(8, 24, 224, 28, 3, COLOR_BG_DARK);
@@ -293,91 +320,6 @@ void DisplayModule::_drawTitle(const __FlashStringHelper* title) {
     _drawPageIndicator();
 }
 
-// ============================================================
-// 状态栏
-// ============================================================
-void DisplayModule::_drawStatusBar(float flowRate, TimerModule* timer) {
-    // 清除状态栏区域
-    _clearArea(0, 80, SCREEN_WIDTH, 34);
-
-    // 流量
-    M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
-    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
-    M5.Lcd.setTextDatum(TL_DATUM);
-    M5.Lcd.drawString("flow", 12, 82);
-
-    M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG);
-    M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
-    char flowStr[16];
-    snprintf(flowStr, sizeof(flowStr), "%.1f g/s", flowRate);
-    M5.Lcd.drawString(flowStr, 12, 93);
-
-    // 计时
-    M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
-    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
-    M5.Lcd.setTextDatum(TR_DATUM);
-    M5.Lcd.drawString("time", SCREEN_WIDTH - 12, 82);
-
-    M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG);
-    M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
-    String timeStr = timer->getFormattedTime();
-    M5.Lcd.drawString(timeStr, SCREEN_WIDTH - 12, 93);
-}
-
-// ============================================================
-// 状态指示器
-// ============================================================
-void DisplayModule::_drawStatusIndicators(TimerModule* timer) {
-    int indicatorY = 122;
-    int indicatorX = 12;
-
-    // 分隔线
-    M5.Lcd.drawFastHLine(0, 118, SCREEN_WIDTH, COLOR_DIVIDER);
-
-    // 状态 LED
-    bool running = timer->isRunning();
-    uint16_t ledColor = running ? COLOR_STATUS_ON : COLOR_STATUS_OFF;
-    uint16_t textColor = running ? COLOR_STATUS_ON : COLOR_TEXT_DIM;
-
-    M5.Lcd.fillCircle(indicatorX, indicatorY + 2, 4, ledColor);
-    M5.Lcd.setTextColor(textColor, COLOR_BG);
-    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
-    M5.Lcd.setTextDatum(TL_DATUM);
-    M5.Lcd.drawString(running ? "BREWING" : "STANDBY", indicatorX + 10, indicatorY);
-}
-
-// ============================================================
-// 迷你曲线
-// ============================================================
-void DisplayModule::_drawMiniCurve(FlowCalculator* flowCalc, int x, int y, int w, int h) {
-    int count = flowCalc->getHistoryCount();
-    if (count < 2) return;
-
-    float* weights = flowCalc->getWeightHistory();
-    float minW = flowCalc->getWeightMin();
-    float maxW = flowCalc->getWeightMax();
-    float range = maxW - minW;
-    if (range < 5) range = 5;
-    minW -= range * 0.1;
-    maxW += range * 0.1;
-
-    float yScale = h / range;
-    int prevX = -1, prevY = -1;
-
-    // 细底纹线
-    M5.Lcd.drawFastHLine(0, y + h, SCREEN_WIDTH, COLOR_ACCENT);
-
-    for (int i = 0; i < count; i++) {
-        int idx = flowCalc->getChronologicalIndex(i);
-        int px = x + (i * w) / count;
-        int py = y + h - (int)((weights[idx] - minW) * yScale);
-        py = constrain(py, y, y + h);
-        if (prevX >= 0) {
-            M5.Lcd.drawLine(prevX, prevY, px, py, COLOR_ACCENT);
-        }
-        prevX = px; prevY = py;
-    }
-}
 
 // ============================================================
 // 曲线绘制
@@ -424,7 +366,8 @@ void DisplayModule::_drawTimeAxis(unsigned long timeMin, unsigned long timeMax, 
 }
 
 void DisplayModule::_drawPageIndicator() {
-    int indicatorY = 118;
+    // 页面指示器在标题栏右侧，不和曲线/状态区域抢位置
+    int indicatorY = 9;
     int indicatorX = SCREEN_WIDTH - 35;
     for (int i = 0; i < 4; i++) {
         uint16_t color = (i == _currentPage) ? COLOR_ACCENT : COLOR_TEXT_DIM;

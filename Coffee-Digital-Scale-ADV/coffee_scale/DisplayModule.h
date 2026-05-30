@@ -32,9 +32,6 @@ private:
     void _drawCurveBackground(const __FlashStringHelper* title);
 
     void _drawTitle(const __FlashStringHelper* title);
-    void _drawStatusBar(float flowRate, TimerModule* timer);
-    void _drawStatusIndicators(TimerModule* timer);
-    void _drawMiniCurve(FlowCalculator* flowCalc, int x, int y, int w, int h);
     void _drawGrid(int x, int y, int w, int h);
     void _drawAxisLabels(float minVal, float maxVal, int x, int y, int h);
     void _drawTimeAxis(unsigned long timeMin, unsigned long timeMax, int x, int y, int w);

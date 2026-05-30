@@ -3,344 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>方案 B · 暖咖氛围 · 240×135 精确优化</title>
+<title>方案 B · 暖咖氛围 · 精确 240×135 (修订版)</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  background: #0d0d14;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #ccc;
-  padding: 32px 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-h1 {
-  font-size: 15px;
-  font-weight: 400;
-  color: #777;
-  letter-spacing: 0.08em;
-  margin-bottom: 2px;
-}
-h1 strong { color: #eee; font-weight: 500; }
-.sub {
-  font-size: 11px;
-  color: #555;
-  margin-bottom: 28px;
-}
-
-/* 卡片容器 */
-.card {
-  background: #14141e;
-  border-radius: 12px;
-  padding: 24px 28px 20px;
-  width: auto;
-  border: 1px solid #2a2a35;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.card-header .name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #D4A574;
-  letter-spacing: 0.03em;
-}
-.card-header .tags {
-  display: flex;
-  gap: 6px;
-}
-.card-header .tags span {
-  font-size: 9px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: #1e1e2a;
-  color: #666;
-}
-
-/* 精确 1x 像素屏幕 */
-.screen-box {
-  width: 240px;
-  height: 135px;
-  border-radius: 6px;
-  border: 2px solid #2a2a35;
-  overflow: hidden;
-  background: #24140D;
-  display: block;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-}
-.screen-box svg { display: block; }
-
-/* 页面按钮 */
-.pages {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-.pages .btn {
-  font-size: 10px;
-  padding: 5px 12px;
-  border-radius: 6px;
-  border: 1px solid #2a2a35;
-  background: transparent;
-  color: #555;
-  cursor: pointer;
-  transition: all 0.12s;
-  letter-spacing: 0.03em;
-}
-.pages .btn:hover {
-  color: #aaa;
-  border-color: #D4A574;
-}
-.pages .btn.active {
-  background: #D4A574;
-  border-color: #D4A574;
-  color: #1a1a1a;
-  font-weight: 600;
-}
-
-/* 说明 */
-.notes {
-  max-width: 500px;
-  text-align: center;
-  font-size: 11px;
-  color: #555;
-  line-height: 1.7;
-  margin-top: 10px;
-}
-.notes strong { color: #888; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0d14;font-family:system-ui,sans-serif;color:#ccc;padding:32px;display:flex;flex-direction:column;align-items:center;gap:24px}
+h1{font-size:15px;font-weight:400;color:#777;letter-spacing:.08em}
+h1 strong{color:#eee;font-weight:500}
+.sub{font-size:11px;color:#555}
+.card{background:#14141e;border-radius:12px;padding:24px 20px 16px;border:1px solid #2a2a35;display:flex;flex-direction:column;align-items:center;gap:14px}
+.card-header{display:flex;justify-content:space-between;width:100%;align-items:center}
+.card-header .name{font-size:13px;font-weight:500;color:#D4A574;letter-spacing:.03em}
+.card-header .tags{display:flex;gap:6px}
+.card-header .tags span{font-size:9px;padding:2px 8px;border-radius:4px;background:#1e1e2a;color:#666}
+.screen-box{width:240px;height:135px;border-radius:4px;border:2px solid #2a2a35;overflow:hidden;background:#24140D;display:block}
+.screen-box svg{display:block}
+.pages{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.pages .btn{font-size:10px;padding:5px 12px;border-radius:6px;border:1px solid #2a2a35;background:transparent;color:#555;cursor:pointer;transition:.12s}
+.pages .btn:hover{color:#aaa;border-color:#D4A574}
+.pages .btn.active{background:#D4A574;border-color:#D4A574;color:#1a1a1a;font-weight:600}
+.layout-diagram{font-size:10px;color:#666;line-height:1.6;white-space:pre;font-family:monospace;background:#1a1a1a;padding:12px 16px;border-radius:8px;border:1px solid #2a2a35;max-width:600px}
+.notes{font-size:11px;color:#555;max-width:500px;text-align:center;line-height:1.6}
 </style>
 </head>
 <body>
-
-<h1>方案 B · <strong>暖咖氛围</strong></h1>
-<p class="sub">240 × 135 像素 · 字体优化 · 线条加粗 · 视觉流畅</p>
+<h1>方案 B · <strong>暖咖氛围</strong> · 修订版</h1>
+<p class="sub">240×135 · 修复所有溢出与重叠</p>
 
 <div class="card">
   <div class="card-header">
     <div class="name">☕ Pour Over Scale</div>
-    <div class="tags">
-      <span>深褐 #24140D</span>
-      <span>暖金 #D4A574</span>
-      <span>Georgia 粗体</span>
-    </div>
+    <div class="tags"><span>深褐 #24140D</span><span>暖金 #D4A574</span></div>
   </div>
-
   <div class="screen-box" id="screenB"></div>
-
   <div class="pages" id="pageBtns">
     <div class="btn active" onclick="showPage(0)">主界面</div>
     <div class="btn" onclick="showPage(1)">重量曲线</div>
     <div class="btn" onclick="showPage(2)">流量曲线</div>
     <div class="btn" onclick="showPage(3)">设置</div>
   </div>
-
-  <div class="notes">
-    <strong>优化要点</strong> · 主数字 40px 粗体 · 数据标签 10px Georgia · 辅助信息 8px · 曲线 1.5px 粗线 · 高对比暖色方案
-  </div>
 </div>
+
+<pre class="layout-diagram">
+┌────────────────────────────────────────────────────────┐
+│      POUR OVER                        [● ○ ○ ○]      │ 0–18  标题栏
+│━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│ 18    粗分隔
+│                    187.3                               │ 22–62 重量 font 6
+│━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│ 64    粗分隔
+│  flow 4.2 g/s               time 01:23                 │ 68–84 状态栏(单行)
+│────────────────────────────────────────────────────────│ 86    细分隔
+│ ● BREWING                                              │ 90–98 状态指示
+│────────────────────────────────────────────────────────│ 100   细分隔
+│  ▁▂▃▅▆▇▆▅▃▂▁▁▂▃▅▆▇▆▅▃▂▁                              │ 102–135 曲线
+└────────────────────────────────────────────────────────┘
+</pre>
 
 <script>
 const W=240, H=135;
-
-// 演示数据
 const D = {weight:187.3, flow:4.2, m:1, s:23, running:true};
 
-/* ========== 主界面 ========== */
-function drawMain() {
+function main() {
+  let w=D.weight, f=D.flow;
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-    <!-- 背景 -->
     <rect width="${W}" height="${H}" fill="#24140D"/>
-
-    <!-- 顶部标题线 -->
-    <line x1="0" y1="0" x2="${W}" y2="0" stroke="#3D2A1A" stroke-width="0"/>
     <rect x="0" y="0" width="${W}" height="18" fill="#1A0D08"/>
-    <text x="120" y="13" text-anchor="middle" fill="#D4A574" font-size="9" font-family="Georgia,serif" font-weight="600" letter-spacing="1.5">POUR OVER</text>
-
-    <!-- 粗分隔线 -->
-    <line x1="0" y1="18" x2="${W}" y2="18" stroke="#D4A574" stroke-width="1.5" opacity="0.4"/>
-    <line x1="0" y1="19" x2="${W}" y2="19" stroke="#1A0D08" stroke-width="1"/>
-
-    <!-- 重量 -->
-    <text x="120" y="56" text-anchor="middle" fill="#F5E6D0" font-size="36" font-family="Georgia,serif" font-weight="700">${D.weight.toFixed(1)}</text>
-    <text x="120" y="70" text-anchor="middle" fill="#A0805A" font-size="8" font-family="Georgia,serif" font-style="italic" letter-spacing="1">grams</text>
-
-    <!-- 粗分隔 -->
-    <line x1="8" y1="78" x2="232" y2="78" stroke="#3D2A1A" stroke-width="2"/>
-    <line x1="8" y1="79" x2="232" y2="79" stroke="#1A0D08" stroke-width="1"/>
-
-    <!-- 流量 -->
-    <text x="12" y="95" fill="#A0805A" font-size="8" font-family="Georgia,serif" font-style="italic">flow</text>
-    <text x="12" y="112" fill="#D4A574" font-size="14" font-family="Georgia,serif" font-weight="600">${D.flow.toFixed(1)}</text>
-    <text x="58" y="112" fill="#A0805A" font-size="8" font-family="Georgia,serif">g/s</text>
-
-    <!-- 计时 -->
-    <text x="228" y="95" text-anchor="end" fill="#A0805A" font-size="8" font-family="Georgia,serif" font-style="italic">time</text>
-    <text x="228" y="112" text-anchor="end" fill="#D4A574" font-size="14" font-family="Georgia,serif" font-weight="600">${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
-
-    <!-- 状态指示器 -->
-    <line x1="0" y1="122" x2="${W}" y2="122" stroke="#2A1A10" stroke-width="1"/>
-    <circle cx="12" cy="130" r="3" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
-    <text x="20" y="133" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="8" font-family="Georgia,serif" font-weight="600" letter-spacing="0.5">${D.running?'BREWING':'STANDBY'}</text>
-
-    <!-- 迷你曲线底栏 -->
-    <line x1="0" y1="135" x2="${W}" y2="135" stroke="#D4A574" stroke-width="1" opacity="0.15"/>
-    <polyline points="0,132 15,128 30,122 50,115 70,108 90,100 110,94 130,93 150,96 170,102 190,108 210,112 240,110"
-      fill="none" stroke="#D4A574" stroke-width="1.2" opacity="0.35" stroke-linecap="round"/>
+    <text x="120" y="12" text-anchor="middle" fill="#D4A574" font-size="9" font-weight="600" letter-spacing="1.5">POUR OVER</text>
+    <circle cx="210" cy="9" r="2.5" fill="#D4A574"/>
+    <circle cx="222" cy="9" r="2.5" fill="#5A4A3A"/>
+    <circle cx="234" cy="9" r="2.5" fill="#5A4A3A"/>
+    <line x1="0" y1="18" x2="240" y2="18" stroke="#D4A574" stroke-width="2" opacity="0.35"/>
+    <line x1="0" y1="19" x2="240" y2="19" stroke="#1A0D08" stroke-width="1"/>
+    <text x="120" y="52" text-anchor="middle" fill="#F5E6D0" font-size="34" font-weight="700">${w.toFixed(1)}</text>
+    <line x1="0" y1="63" x2="240" y2="63" stroke="#D4A574" stroke-width="2" opacity="0.35"/>
+    <line x1="0" y1="64" x2="240" y2="64" stroke="#1A0D08" stroke-width="1"/>
+    <text x="12" y="83" fill="#D4A574" font-size="11" font-weight="600">flow ${f.toFixed(1)} g/s</text>
+    <text x="228" y="83" text-anchor="end" fill="#D4A574" font-size="11" font-weight="600">${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
+    <line x1="0" y1="88" x2="240" y2="88" stroke="#3A2A1A" stroke-width="1"/>
+    <circle cx="12" cy="95" r="3" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
+    <text x="20" y="98" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="8" font-weight="600" letter-spacing="0.5">${D.running?'BREWING':'STANDBY'}</text>
+    <!-- 迷你曲线 -->
+    <polyline points="0,128 15,124 30,118 50,112 70,106 90,100 110,98 130,100 150,104 170,110 190,114 210,112 240,108"
+      fill="none" stroke="#D4A574" stroke-width="1.5" opacity="0.4" stroke-linecap="round"/>
+    <line x1="0" y1="135" x2="240" y2="135" stroke="#D4A574" stroke-width="0.5" opacity="0.15"/>
   </svg>`;
 }
 
-/* ========== 重量曲线 ========== */
-function drawWeightCurve() {
-  // 生成更自然的曲线点
-  let pts = [];
-  for (let i = 0; i < 24; i++) {
-    let x = 32 + i * 8.7;
-    let y = 110 - (Math.sin(i * 0.25) * 35 + Math.sin(i * 0.1) * 20 + 50) * 0.8;
-    y = Math.max(25, Math.min(115, y));
-    pts.push([x, y]);
-  }
-  let ptsStr = pts.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
-
+function weightCurve() {
+  let pts="";
+  for(let i=0;i<24;i++){let x=32+i*8.7;let y=115-(Math.sin(i*0.25+0.3)*35+Math.sin(i*0.08)*18+40);pts+=x.toFixed(1)+','+Math.max(28,Math.min(118,y)).toFixed(1)+' '}
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
     <rect width="${W}" height="${H}" fill="#24140D"/>
     <rect x="0" y="0" width="${W}" height="18" fill="#1A0D08"/>
-    <text x="120" y="13" text-anchor="middle" fill="#D4A574" font-size="9" font-family="Georgia,serif" font-weight="600" letter-spacing="1">WEIGHT</text>
-    <line x1="0" y1="18" x2="${W}" y2="18" stroke="#D4A574" stroke-width="1.5" opacity="0.3"/>
-
-    <!-- Y轴刻度 -->
-    <text x="27" y="30" fill="#7A6A50" font-size="8" font-family="Georgia,serif">200</text>
-    <line x1="31" y1="30" x2="35" y2="30" stroke="#7A6A50" stroke-width="1"/>
-    <text x="27" y="115" fill="#7A6A50" font-size="8" font-family="Georgia,serif">0</text>
-    <line x1="31" y1="115" x2="35" y2="115" stroke="#7A6A50" stroke-width="1"/>
-
-    <!-- 网格 -->
-    <line x1="35" y1="25" x2="35" y2="120" stroke="#3A2A1A" stroke-width="1.5"/>
-    <line x1="35" y1="120" x2="235" y2="120" stroke="#3A2A1A" stroke-width="1.5"/>
-    <line x1="35" y1="55" x2="235" y2="55" stroke="#2A1A10" stroke-width="0.5"/>
+    <text x="120" y="12" text-anchor="middle" fill="#D4A574" font-size="9" font-weight="600" letter-spacing="1">WEIGHT</text>
+    <circle cx="210" cy="9" r="2.5" fill="#D4A574"/><circle cx="222" cy="9" r="2.5" fill="#5A4A3A"/><circle cx="234" cy="9" r="2.5" fill="#5A4A3A"/>
+    <line x1="0" y1="18" x2="240" y2="18" stroke="#D4A574" stroke-width="1.5" opacity="0.3"/>
+    <line x1="35" y1="25" x2="35" y2="118" stroke="#3A2A1A" stroke-width="1.5"/>
+    <line x1="35" y1="118" x2="235" y2="118" stroke="#3A2A1A" stroke-width="1.5"/>
+    <line x1="35" y1="50" x2="235" y2="50" stroke="#2A1A10" stroke-width="0.5"/>
     <line x1="35" y1="85" x2="235" y2="85" stroke="#2A1A10" stroke-width="0.5"/>
-
-    <!-- 曲线 -->
-    <polyline points="${ptsStr}"
-      fill="none" stroke="#D4A574" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-    <!-- 填充渐变 -->
-    <polygon points="35,120 ${ptsStr} 235,120" fill="url(#gradW)" opacity="0.12"/>
-
-    <!-- X轴 -->
-    <text x="35" y="133" fill="#5A4A3A" font-size="8" font-family="Georgia,serif">0</text>
-    <text x="235" y="133" text-anchor="end" fill="#5A4A3A" font-size="8" font-family="Georgia,serif">24s</text>
-
-    <defs>
-      <linearGradient id="gradW" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#D4A574"/>
-        <stop offset="100%" stop-color="#D4A574" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
+    <text x="27" y="30" fill="#7A6A50" font-size="8">200</text>
+    <text x="27" y="115" fill="#7A6A50" font-size="8">0</text>
+    <polyline points="${pts}" fill="none" stroke="#D4A574" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="35" y="132" fill="#5A4A3A" font-size="8">0</text>
+    <text x="235" y="132" text-anchor="end" fill="#5A4A3A" font-size="8">24s</text>
   </svg>`;
 }
 
-/* ========== 流量曲线 ========== */
-function drawFlowCurve() {
-  let pts = [];
-  for (let i = 0; i < 24; i++) {
-    let x = 32 + i * 8.7;
-    let y = 110 - (Math.sin(i * 0.3) * 20 + Math.sin(i * 0.05) * 15 + Math.sin(i * 0.12) * 10 + 25) * 0.7;
-    y = Math.max(30, Math.min(118, y));
-    pts.push([x, y]);
-  }
-  let ptsStr = pts.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
-
+function flowCurve() {
+  let pts="";
+  for(let i=0;i<24;i++){let x=32+i*8.7;let y=118-(Math.sin(i*0.3+0.5)*18+Math.sin(i*0.06)*12+20);pts+=x.toFixed(1)+','+Math.max(32,Math.min(120,y)).toFixed(1)+' '}
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
     <rect width="${W}" height="${H}" fill="#24140D"/>
     <rect x="0" y="0" width="${W}" height="18" fill="#1A0D08"/>
-    <text x="120" y="13" text-anchor="middle" fill="#D4A574" font-size="9" font-family="Georgia,serif" font-weight="600" letter-spacing="1">FLOW</text>
-    <line x1="0" y1="18" x2="${W}" y2="18" stroke="#D4A574" stroke-width="1.5" opacity="0.3"/>
-
-    <text x="27" y="30" fill="#7A6A50" font-size="8" font-family="Georgia,serif">6</text>
-    <line x1="31" y1="30" x2="35" y2="30" stroke="#7A6A50" stroke-width="1"/>
-    <text x="27" y="115" fill="#7A6A50" font-size="8" font-family="Georgia,serif">0</text>
-    <line x1="31" y1="115" x2="35" y2="115" stroke="#7A6A50" stroke-width="1"/>
-
-    <line x1="35" y1="25" x2="35" y2="120" stroke="#3A2A1A" stroke-width="1.5"/>
-    <line x1="35" y1="120" x2="235" y2="120" stroke="#3A2A1A" stroke-width="1.5"/>
-    <line x1="35" y1="55" x2="235" y2="55" stroke="#2A1A10" stroke-width="0.5"/>
+    <text x="120" y="12" text-anchor="middle" fill="#D4A574" font-size="9" font-weight="600" letter-spacing="1">FLOW</text>
+    <circle cx="210" cy="9" r="2.5" fill="#D4A574"/><circle cx="222" cy="9" r="2.5" fill="#5A4A3A"/><circle cx="234" cy="9" r="2.5" fill="#5A4A3A"/>
+    <line x1="0" y1="18" x2="240" y2="18" stroke="#D4A574" stroke-width="1.5" opacity="0.3"/>
+    <line x1="35" y1="25" x2="35" y2="118" stroke="#3A2A1A" stroke-width="1.5"/>
+    <line x1="35" y1="118" x2="235" y2="118" stroke="#3A2A1A" stroke-width="1.5"/>
+    <line x1="35" y1="50" x2="235" y2="50" stroke="#2A1A10" stroke-width="0.5"/>
     <line x1="35" y1="85" x2="235" y2="85" stroke="#2A1A10" stroke-width="0.5"/>
-
-    <polyline points="${ptsStr}"
-      fill="none" stroke="#FF8C42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-    <polygon points="35,120 ${ptsStr} 235,120" fill="url(#gradF)" opacity="0.12"/>
-
-    <text x="35" y="133" fill="#5A4A3A" font-size="8" font-family="Georgia,serif">0</text>
-    <text x="235" y="133" text-anchor="end" fill="#5A4A3A" font-size="8" font-family="Georgia,serif">24s</text>
-
-    <defs>
-      <linearGradient id="gradF" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#FF8C42"/>
-        <stop offset="100%" stop-color="#FF8C42" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
+    <text x="27" y="30" fill="#7A6A50" font-size="8">6</text>
+    <text x="27" y="115" fill="#7A6A50" font-size="8">0</text>
+    <polyline points="${pts}" fill="none" stroke="#FF8C42" stroke-width="2" stroke-linecap="round"/>
+    <text x="35" y="132" fill="#5A4A3A" font-size="8">0</text>
+    <text x="235" y="132" text-anchor="end" fill="#5A4A3A" font-size="8">24s</text>
   </svg>`;
 }
 
-/* ========== 设置 ========== */
-function drawSettings() {
+function settings() {
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
     <rect width="${W}" height="${H}" fill="#24140D"/>
     <rect x="0" y="0" width="${W}" height="18" fill="#1A0D08"/>
-    <text x="120" y="13" text-anchor="middle" fill="#D4A574" font-size="9" font-family="Georgia,serif" font-weight="600" letter-spacing="1">SETTINGS</text>
-    <line x1="0" y1="18" x2="${W}" y2="18" stroke="#D4A574" stroke-width="1.5" opacity="0.3"/>
-
-    <!-- 设置项卡片 -->
-    <rect x="10" y="24" width="220" height="28" rx="3" fill="#1A0D08" stroke="#3A2A1A" stroke-width="1"/>
-    <text x="16" y="36" fill="#8A7A60" font-size="7" font-family="Georgia,serif" font-style="italic">start</text>
-    <text x="16" y="48" fill="#D4A574" font-size="11" font-family="Georgia,serif" font-weight="600">0.5 g</text>
-    <text x="130" y="36" fill="#8A7A60" font-size="7" font-family="Georgia,serif" font-style="italic">reset</text>
-    <text x="130" y="48" fill="#D4A574" font-size="11" font-family="Georgia,serif" font-weight="600">0.3 g</text>
-
-    <rect x="10" y="56" width="220" height="28" rx="3" fill="#1A0D08" stroke="#3A2A1A" stroke-width="1"/>
-    <text x="16" y="68" fill="#8A7A60" font-size="7" font-family="Georgia,serif" font-style="italic">factor</text>
-    <text x="16" y="80" fill="#D4A574" font-size="11" font-family="Georgia,serif" font-weight="600">420.0</text>
-
-    <rect x="10" y="88" width="220" height="22" rx="3" fill="#1A0D08" stroke="#3A2A1A" stroke-width="1"/>
-    <text x="16" y="100" fill="#8A7A60" font-size="7" font-family="Georgia,serif" font-style="italic">key</text>
-    <text x="50" y="100" fill="#A0805A" font-size="9" font-family="Georgia,serif">1: page</text>
-    <text x="130" y="100" fill="#A0805A" font-size="9" font-family="Georgia,serif">t: tare</text>
-
-    <!-- 底部提示 -->
-    <text x="120" y="132" text-anchor="middle" fill="#5A4A3A" font-size="7" font-family="monospace">[ 1 ] RETURN</text>
+    <text x="120" y="12" text-anchor="middle" fill="#D4A574" font-size="9" font-weight="600" letter-spacing="1">SETTINGS</text>
+    <circle cx="210" cy="9" r="2.5" fill="#D4A574"/><circle cx="222" cy="9" r="2.5" fill="#5A4A3A"/><circle cx="234" cy="9" r="2.5" fill="#5A4A3A"/>
+    <line x1="0" y1="18" x2="240" y2="18" stroke="#D4A574" stroke-width="1.5" opacity="0.3"/>
+    <rect x="8" y="24" width="224" height="24" rx="2" fill="#1A0D08"/>
+    <text x="14" y="36" fill="#8A7A60" font-size="7">start</text>
+    <text x="14" y="46" fill="#D4A574" font-size="10" font-weight="600">0.5 g</text>
+    <text x="124" y="36" fill="#8A7A60" font-size="7">reset</text>
+    <text x="124" y="46" fill="#D4A574" font-size="10" font-weight="600">0.3 g</text>
+    <rect x="8" y="52" width="224" height="24" rx="2" fill="#1A0D08"/>
+    <text x="14" y="64" fill="#8A7A60" font-size="7">factor</text>
+    <text x="14" y="74" fill="#D4A574" font-size="10" font-weight="600">420.0</text>
+    <rect x="8" y="80" width="224" height="20" rx="2" fill="#1A0D08"/>
+    <text x="14" y="92" fill="#8A7A60" font-size="7">key</text>
+    <text x="48" y="92" fill="#A0805A" font-size="8">1: page</text>
+    <text x="124" y="92" fill="#A0805A" font-size="8">t: tare</text>
+    <text x="120" y="130" text-anchor="middle" fill="#5A4A3A" font-size="7">[ 1 ] RETURN</text>
   </svg>`;
 }
 
-/* ===== 渲染控制 ===== */
-const views = [drawMain, drawWeightCurve, drawFlowCurve, drawSettings];
+const views = [main, weightCurve, flowCurve, settings];
 let currentPage = 0;
-
 function showPage(idx) {
   currentPage = idx;
-  document.querySelectorAll('#pageBtns .btn').forEach((b, i) => {
-    b.className = 'btn' + (i === idx ? ' active' : '');
-  });
-  render();
+  document.querySelectorAll('#pageBtns .btn').forEach((b,i)=>{b.className='btn'+(i===idx?' active':'')});
+  document.getElementById('screenB').innerHTML = views[idx]();
 }
-
-function render() {
-  document.getElementById('screenB').innerHTML = views[currentPage]();
-}
-
-render();
+showPage(0);
 </script>
 </body>
 </html>
