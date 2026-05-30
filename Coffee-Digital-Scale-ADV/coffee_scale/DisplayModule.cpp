@@ -112,7 +112,7 @@ void DisplayModule::setTargetReached(bool reached) {
 // │  ████████████░░░░░░░░░░                                │ 56–59  进度条
 // │                    187/225g                            │ 63     注水量
 // │────────────────────────────────────────────────────────│ 67
-// │  flow 4.2 g/s               time 01:23                 │ 72–96  状态栏
+// │  flow 4.2     187/225g         01:23                 │ 63–95  flow/注水量/time 同层
 // │────────────────────────────────────────────────────────│ 100
 // │ ● BREWING                                              │ 104–112
 // │────────────────────────────────────────────────────────│ 116
@@ -134,35 +134,44 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
     M5.Lcd.drawFastHLine(0, 53, SCREEN_WIDTH, COLOR_ACCENT);
     M5.Lcd.drawFastHLine(0, 54, SCREEN_WIDTH, COLOR_BG_DARK);
 
-    // === 进度条（y:56-59）+ 目标水量（y:63）===
+    // === 进度条（y:56-59）===
     _drawProgressBar(10, 56, SCREEN_WIDTH - 20, 4, weight, _brewTarget);
+
+    // === 信息行（y:63-95）: flow / 注水量 / time 同层 ===
     char targetStr[16];
     if (_brewTarget > 0) {
         snprintf(targetStr, sizeof(targetStr), "%.0f/%.0fg", weight, _brewTarget);
     } else {
         snprintf(targetStr, sizeof(targetStr), "%.1fg", weight);
     }
-    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
-    M5.Lcd.setTextColor(_targetReached ? COLOR_SUCCESS : COLOR_TEXT_DIM, COLOR_BG);
-    M5.Lcd.setTextDatum(TC_DATUM);
-    M5.Lcd.drawString(targetStr, SCREEN_WIDTH / 2, 63);
 
-    // === 细分隔 ===
-    M5.Lcd.drawFastHLine(0, 68, SCREEN_WIDTH, COLOR_DIVIDER);
-
-    // === 状态栏单行（y:72-96, FreeSerif12pt）===
     M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG);
     M5.Lcd.setTextSize(1);
 
-    char buf[24];
-    snprintf(buf, sizeof(buf), "flow %.1f g/s", flowRate);
+    // flow 左
+    char buf[20];
+    snprintf(buf, sizeof(buf), "flow %.1f", flowRate);
     M5.Lcd.setTextDatum(TL_DATUM);
-    M5.Lcd.drawString(buf, 10, 76);
+    M5.Lcd.drawString(buf, 10, 67);
 
-    String timeStr = timer->getFormattedTime();
+    // 注水量 中
+    M5.Lcd.setTextDatum(TC_DATUM);
+    M5.Lcd.setTextColor(_targetReached ? COLOR_SUCCESS : COLOR_TEXT_DIM, COLOR_BG);
+    M5.Lcd.drawString(targetStr, SCREEN_WIDTH / 2, 67);
+
+    // "g/s" 接在 flow 后面
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
+    M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
+    snprintf(buf, sizeof(buf), "%.1f", flowRate);
+    int flowW = strlen(buf) * 7;
+    M5.Lcd.drawString("g/s", 10 + 52 + flowW, 70);
+
+    // time 右
+    M5.Lcd.setFreeFont(&FreeSerif12pt7b);
+    M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG);
     M5.Lcd.setTextDatum(TR_DATUM);
-    M5.Lcd.drawString("time " + timeStr, SCREEN_WIDTH - 10, 76);
+    M5.Lcd.drawString(timer->getFormattedTime(), SCREEN_WIDTH - 10, 67);
 
     // === 细分隔 ===
     M5.Lcd.drawFastHLine(0, 100, SCREEN_WIDTH, COLOR_DIVIDER);
