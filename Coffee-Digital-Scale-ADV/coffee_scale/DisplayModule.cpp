@@ -106,10 +106,10 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
 
     M5.Lcd.setTextColor(COLOR_TEXT, COLOR_BG);
     M5.Lcd.setTextDatum(MC_DATUM);
-    M5.Lcd.setTextSize(1);
+    M5.Lcd.setTextSize(WEIGHT_FONT_SIZE);
     char weightStr[10];
     dtostrf(weight, 5, 1, weightStr);
-    M5.Lcd.drawString(weightStr, SCREEN_WIDTH / 2, 42, 6);
+    M5.Lcd.drawString(weightStr, SCREEN_WIDTH / 2, 42, 2);
 
     // === 粗分隔线（y:64）===
     M5.Lcd.drawFastHLine(0, 63, SCREEN_WIDTH, COLOR_ACCENT);
@@ -172,8 +172,8 @@ void DisplayModule::_drawWeightCurvePage(FlowCalculator* flowCalc) {
     int count = flowCalc->getHistoryCount();
     if (count < 2) return;
 
-    int curveX = 35, curveY = TITLE_HEIGHT + 5;
-    int curveW = SCREEN_WIDTH - 40, curveH = SCREEN_HEIGHT - TITLE_HEIGHT - 25;
+    int curveX = 18, curveY = TITLE_HEIGHT + 5;
+    int curveW = SCREEN_WIDTH - 22, curveH = SCREEN_HEIGHT - TITLE_HEIGHT - 25;
     _clearArea(curveX, curveY, curveW, curveH);
     _drawGrid(curveX, curveY, curveW, curveH);
 
@@ -212,8 +212,8 @@ void DisplayModule::_drawFlowCurvePage(FlowCalculator* flowCalc) {
     int count = flowCalc->getHistoryCount();
     if (count < 2) return;
 
-    int curveX = 35, curveY = TITLE_HEIGHT + 5;
-    int curveW = SCREEN_WIDTH - 40, curveH = SCREEN_HEIGHT - TITLE_HEIGHT - 25;
+    int curveX = 18, curveY = TITLE_HEIGHT + 5;
+    int curveW = SCREEN_WIDTH - 22, curveH = SCREEN_HEIGHT - TITLE_HEIGHT - 25;
     _clearArea(curveX, curveY, curveW, curveH);
     _drawGrid(curveX, curveY, curveW, curveH);
 
@@ -343,10 +343,10 @@ void DisplayModule::_drawAxisLabels(float minVal, float maxVal, int x, int y, in
 
     char label[8];
     snprintf(label, sizeof(label), "%.0f", maxVal);
-    M5.Lcd.drawString(label, x + 30, y);
+    M5.Lcd.drawString(label, x + 14, y);
 
     snprintf(label, sizeof(label), "%.0f", minVal);
-    M5.Lcd.drawString(label, x + 30, y + h - 8);
+    M5.Lcd.drawString(label, x + 14, y + h - 8);
 }
 
 void DisplayModule::_drawTimeAxis(unsigned long timeMin, unsigned long timeMax, int x, int y, int w) {
