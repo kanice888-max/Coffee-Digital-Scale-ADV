@@ -1,4 +1,7 @@
 #include "DisplayModule.h"
+#include <Fonts/FreeSerif12pt7b.h>
+#include <Fonts/FreeSerif18pt7b.h>
+#include <Fonts/FreeSerif9pt7b.h>
 
 DisplayModule::DisplayModule() {
     _currentPage = PAGE_MAIN;
@@ -106,27 +109,28 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
 
     M5.Lcd.setTextColor(COLOR_TEXT, COLOR_BG);
     M5.Lcd.setTextDatum(MC_DATUM);
-    M5.Lcd.setTextSize(WEIGHT_FONT_SIZE);
+    M5.Lcd.setFreeFont(&FreeSerif18pt7b);
     char weightStr[10];
     dtostrf(weight, 5, 1, weightStr);
-    M5.Lcd.drawString(weightStr, SCREEN_WIDTH / 2, 42, 2);
+    M5.Lcd.drawString(weightStr, SCREEN_WIDTH / 2, 42);
 
     // === 粗分隔线（y:64）===
     M5.Lcd.drawFastHLine(0, 63, SCREEN_WIDTH, COLOR_ACCENT);
     M5.Lcd.drawFastHLine(0, 64, SCREEN_WIDTH, COLOR_BG_DARK);
 
     // === 状态栏 — 单行紧凑（y:68-84）===
+    M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG);
-    M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
+    M5.Lcd.setTextSize(1);
     M5.Lcd.setTextDatum(TL_DATUM);
 
     char line[30];
     snprintf(line, sizeof(line), "flow %.1f g/s", flowRate);
-    M5.Lcd.drawString(line, 12, 74, 2);
+    M5.Lcd.drawString(line, 12, 74);
 
     String timeStr = timer->getFormattedTime();
     M5.Lcd.setTextDatum(TR_DATUM);
-    M5.Lcd.drawString(timeStr, SCREEN_WIDTH - 12, 74, 2);
+    M5.Lcd.drawString(timeStr, SCREEN_WIDTH - 12, 74);
 
     // === 分隔线 ===
     M5.Lcd.drawFastHLine(0, 88, SCREEN_WIDTH, COLOR_DIVIDER);
@@ -136,10 +140,10 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
     uint16_t ledColor = running ? COLOR_STATUS_ON : COLOR_STATUS_OFF;
     uint16_t textColor = running ? COLOR_STATUS_ON : COLOR_TEXT_DIM;
     M5.Lcd.fillCircle(12, 95, 3, ledColor);
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(textColor, COLOR_BG);
     M5.Lcd.setTextDatum(TL_DATUM);
-    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
-    M5.Lcd.drawString(running ? "BREWING" : "STANDBY", 20, 91, 1);
+    M5.Lcd.drawString(running ? "BREWING" : "STANDBY", 20, 91);
 
     // === 迷你曲线（y:102-135）===
     int count = flowCalc->getHistoryCount();
@@ -252,8 +256,9 @@ void DisplayModule::_drawSettingsPage() {
 
     // 标题栏
     M5.Lcd.fillRect(0, 0, SCREEN_WIDTH, TITLE_HEIGHT, COLOR_BG_DARK);
+    M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG_DARK);
-    M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
+    M5.Lcd.setTextSize(1);
     M5.Lcd.setTextDatum(TC_DATUM);
     M5.Lcd.drawString("SETTINGS", SCREEN_WIDTH / 2, 3);
     M5.Lcd.drawFastHLine(0, TITLE_HEIGHT, SCREEN_WIDTH, COLOR_ACCENT);
@@ -261,39 +266,38 @@ void DisplayModule::_drawSettingsPage() {
 
     // 设置项卡
     M5.Lcd.fillRoundRect(8, 24, 224, 28, 3, COLOR_BG_DARK);
-
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
-    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
     M5.Lcd.setTextDatum(TL_DATUM);
     M5.Lcd.drawString("start", 14, 27);
     M5.Lcd.drawString("reset", 128, 27);
 
+    M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG_DARK);
-    M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
     M5.Lcd.drawString("0.5 g", 14, 38);
     M5.Lcd.drawString("0.3 g", 128, 38);
 
     M5.Lcd.fillRoundRect(8, 56, 224, 28, 3, COLOR_BG_DARK);
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
-    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
     M5.Lcd.drawString("factor", 14, 59);
+    M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG_DARK);
-    M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
     M5.Lcd.drawString("420.0", 14, 70);
 
     M5.Lcd.fillRoundRect(8, 88, 224, 22, 3, COLOR_BG_DARK);
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
-    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
     M5.Lcd.drawString("key", 14, 91);
+    M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
-    M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
     M5.Lcd.drawString("1: page", 48, 91);
     M5.Lcd.drawString("t: tare", 126, 91);
 
     // 底部返回提示
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
     M5.Lcd.setTextDatum(TC_DATUM);
-    M5.Lcd.setTextSize(SMALL_FONT_SIZE);
     M5.Lcd.drawString("[ 1 ] RETURN", SCREEN_WIDTH / 2, SCREEN_HEIGHT - 10);
 }
 
@@ -313,8 +317,9 @@ void DisplayModule::_drawCurveBackground(const __FlashStringHelper* title) {
 }
 
 void DisplayModule::_drawTitle(const __FlashStringHelper* title) {
+    M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG_DARK);
-    M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
+    M5.Lcd.setTextSize(1);
     M5.Lcd.setTextDatum(TC_DATUM);
     M5.Lcd.drawString(title, SCREEN_WIDTH / 2, 3);
     _drawPageIndicator();
