@@ -171,11 +171,11 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
     bool running = timer->isRunning();
     uint16_t ledColor = running ? COLOR_STATUS_ON : COLOR_STATUS_OFF;
     uint16_t statColor = running ? COLOR_STATUS_ON : COLOR_TEXT_DIM;
-    M5.Lcd.fillCircle(10, 98, 3, ledColor);
+    M5.Lcd.fillCircle(10, 94, 3, ledColor);
     M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(statColor, COLOR_BG);
     M5.Lcd.setTextDatum(TL_DATUM);
-    M5.Lcd.drawString(running ? "BREWING" : "STANDBY", 18, 94);
+    M5.Lcd.drawString(running ? "BREWING" : "STANDBY", 18, 90);
 
     // === 迷你曲线（y:92-135, 43px）===
     int count = flowCalc->getHistoryCount();
@@ -193,8 +193,8 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
         for (int i = 0; i < count; i++) {
             int idx = flowCalc->getChronologicalIndex(i);
             int px = (i * SCREEN_WIDTH) / count;
-            int py = 98 + 37 - (int)((weights[idx] - minW) * yScale);
-            py = constrain(py, 98, 135);
+            int py = 94 + 41 - (int)((weights[idx] - minW) * yScale);
+            py = constrain(py, 94, 135);
             if (prevX >= 0) {
                 M5.Lcd.drawLine(prevX, prevY, px, py, COLOR_ACCENT);
                 M5.Lcd.drawLine(prevX, prevY + 1, px, py + 1, COLOR_ACCENT);
