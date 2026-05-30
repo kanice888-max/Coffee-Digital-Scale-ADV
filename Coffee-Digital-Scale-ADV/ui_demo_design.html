@@ -66,10 +66,14 @@ function main() {
     <text x="228" y="79" text-anchor="end" fill="#8A7A60" font-size="8" ${FF}>time</text>
     <text x="228" y="96" text-anchor="end" fill="#D4A574" font-size="16" font-weight="700" ${FF}>${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
     <line x1="0" y1="104" x2="240" y2="104" stroke="#3A2A1A" stroke-width="1"/>
-    <circle cx="12" cy="111" r="4" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
-    <text x="22" y="115" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="9" font-weight="600" letter-spacing="0.5" ${FF}>${D.running?'BREWING':'STANDBY'}</text>
-    <polyline points="0,135 8,130 18,124 30,118 45,112 62,106 80,102 100,100 118,101 136,103 154,107 170,111 186,114 200,115 216,113 230,110 240,108"
-      fill="none" stroke="#D4A574" stroke-width="2" opacity="0.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="12" cy="109" r="4" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
+    <text x="22" y="113" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="9" font-weight="600" letter-spacing="0.5" ${FF}>${D.running?'BREWING':'STANDBY'}</text>
+    <!-- 进度条 187/225g -->
+    <rect x="12" y="117" width="216" height="5" rx="2" fill="#3A2A1A"/>
+    <rect x="12" y="117" width="180" height="5" rx="2" fill="#5CCB" opacity="0.8"/>
+    <text x="228" y="113" text-anchor="end" fill="#8A7A60" font-size="8" ${FF}>187/225g</text>
+    <polyline points="0,132 8,128 18,122 30,118 45,114 62,110 80,108 100,106 118,107 136,109 154,112 170,115 186,117 200,118 216,116 230,113 240,111"
+      fill="none" stroke="#D4A574" stroke-width="1.5" opacity="0.5" stroke-linecap="round" stroke-linejoin="round"/>
     <line x1="0" y1="135" x2="240" y2="135" stroke="#D4A574" stroke-width="0.5" opacity="0.15"/>
   </svg>`;
 }
@@ -135,7 +139,13 @@ function settings() {
     <text x="14" y="92" fill="#8A7A60" font-size="7" ${FF}>key</text>
     <text x="48" y="92" fill="#A0805A" font-size="8" ${FF}>1: page</text>
     <text x="124" y="92" fill="#A0805A" font-size="8" ${FF}>t: tare</text>
-    <text x="120" y="130" text-anchor="middle" fill="#5A4A3A" font-size="7" ${FF}>[ 1 ] RETURN</text>
+        <rect x="8" y="52" width="224" height="24" rx="2" fill="#1A0D08"/>
+    <text x="14" y="64" fill="#8A7A60" font-size="7" ${FF}>target water</text>
+    <text x="130" y="64" fill="#D4A574" font-size="10" font-weight="600" ${FF}>225 g</text>
+    <rect x="8" y="80" width="224" height="20" rx="2" fill="#1A0D08"/>
+    <text x="14" y="92" fill="#8A7A60" font-size="7" ${FF}>factor</text>
+    <text x="74" y="92" fill="#A0805A" font-size="8" ${FF}>420.0</text>
+    <text x="120" y="130" text-anchor="middle" fill="#5A4A3A" font-size="6" ${FF}>1:return  r:ratio  d:dose  =:confirm</text>
   </svg>`;
 }
 
