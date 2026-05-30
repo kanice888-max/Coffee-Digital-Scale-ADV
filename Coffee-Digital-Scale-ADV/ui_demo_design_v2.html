@@ -43,7 +43,7 @@ h1 strong{color:#eee;font-weight:500}
   <strong>方向保留</strong> 方案 B 暖咖氛围已确认，v2 不做方向变更，只做视觉精修。<br>
   <strong>修复</strong> 上一版设置页存在元素重叠（旧 settings 和新 ratio/dose 区块混合）。<br>
   <strong>暖色替换</strong> 进度条从 <code>#5CCB</code> 青绿改为 <code>#C4956A</code> 暖金色，匹配整体色温。<br>
-  <strong>间距重组</strong> 进度条在状态栏上方，接在重量分隔线后，BREWING 左侧，注水量居中显示在进度条下面。<br>
+  <strong>间距重组</strong> 进度条 → 注水量 → 状态栏单行 → BREWING → 迷你曲线，BREWING 左侧，注水量居中显示在进度条下面。<br>
   <strong>设置页重构</strong> 只显示 ratio/dose/target（新功能），去掉不再需要的 start/reset 旧卡。
 </div>
 
@@ -75,26 +75,25 @@ function main(){
     <circle cx="210" cy="8" r="2" fill="#D4A574"/><circle cx="222" cy="8" r="2" fill="#5A4A3A"/><circle cx="234" cy="8" r="2" fill="#5A4A3A"/>
     <line x1="0" y1="16" x2="${W}" y2="16" stroke="#D4A574" stroke-width="1.5" opacity="0.3"/>
     <!-- 重量 -->
-    <text x="120" y="50" text-anchor="middle" fill="#F5E6D0" font-size="32" font-weight="700" ${F}>${w.toFixed(1)}</text>
+    <text x="120" y="48" text-anchor="middle" fill="#F5E6D0" font-size="32" font-weight="700" ${F}>${w.toFixed(1)}</text>
     <!-- 分隔 -->
-    <line x1="0" y1="60" x2="${W}" y2="60" stroke="#D4A574" stroke-width="1.5" opacity="0.25"/>
-    <!-- 进度条 + 目标水量（顶部） -->
-    <rect x="10" y="65" width="${W-20}" height="4" rx="2" fill="#3A2A1A"/>
-    <rect x="10" y="65" width="168" height="4" rx="2" fill="#C4956A" opacity="0.85"/>
-    <text x="120" y="73" text-anchor="middle" fill="#8A7A60" font-size="8" ${F}>187/225g</text>
-    <!-- 状态栏：flow/time 双行 -->
-    <text x="10" y="84" fill="#8A7A60" font-size="7" ${F}>flow</text>
-    <text x="10" y="100" fill="#D4A574" font-size="14" font-weight="700" ${F}>${f.toFixed(1)}</text>
-    <text x="48" y="100" fill="#D4A574" font-size="10" font-weight="600" ${F}>g/s</text>
-    <text x="${W-10}" y="84" text-anchor="end" fill="#8A7A60" font-size="7" ${F}>time</text>
-    <text x="${W-10}" y="100" text-anchor="end" fill="#D4A574" font-size="14" font-weight="700" ${F}>${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
+    <line x1="0" y1="55" x2="${W}" y2="55" stroke="#D4A574" stroke-width="1.5" opacity="0.25"/>
+    <!-- 进度条 + 注水量 -->
+    <rect x="10" y="58" width="${W-20}" height="4" rx="2" fill="#3A2A1A"/>
+    <rect x="10" y="58" width="168" height="4" rx="2" fill="#C4956A" opacity="0.85"/>
+    <text x="120" y="66" text-anchor="middle" fill="#8A7A60" font-size="8" ${F}>187/225g</text>
     <!-- 分隔 -->
-    <line x1="0" y1="110" x2="${W}" y2="110" stroke="#3A2A1A" stroke-width="1"/>
+    <line x1="0" y1="71" x2="${W}" y2="71" stroke="#3A2A1A" stroke-width="1"/>
+    <!-- 状态栏单行: flow 4.2 g/s / time 01:23 -->
+    <text x="10" y="83" fill="#D4A574" font-size="10" font-weight="600" ${F}>flow ${f.toFixed(1)} g/s</text>
+    <text x="${W-10}" y="83" text-anchor="end" fill="#D4A574" font-size="10" font-weight="600" ${F}>time ${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
+    <!-- 分隔 -->
+    <line x1="0" y1="102" x2="${W}" y2="102" stroke="#3A2A1A" stroke-width="1"/>
     <!-- BREWING -->
-    <circle cx="10" cy="116" r="3" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
-    <text x="18" y="115" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="8" font-weight="600" letter-spacing="0.5" ${F}>${D.running?'BREWING':'STANDBY'}</text>
+    <circle cx="10" cy="109" r="3" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
+    <text x="18" y="108" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="8" font-weight="600" letter-spacing="0.5" ${F}>${D.running?'BREWING':'STANDBY'}</text>
     <!-- 迷你曲线 -->
-    <polyline points="0,134 6,132 14,129 24,125 38,120 54,116 72,113 92,111 112,112 132,114 152,117 170,119 186,120 200,121 216,119 230,116 240,114"
+    <polyline points="0,134 6,132 14,128 24,124 38,119 54,115 72,112 92,110 112,111 132,113 152,116 170,119 186,122 200,123 216,120 230,117 240,115"
       fill="none" stroke="#D4A574" stroke-width="1.2" opacity="0.4" stroke-linecap="round" stroke-linejoin="round"/>
     <line x1="0" y1="135" x2="${W}" y2="135" stroke="#D4A574" stroke-width="0.5" opacity="0.1"/>
   </svg>`;
