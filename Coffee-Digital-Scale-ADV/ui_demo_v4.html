@@ -58,11 +58,11 @@ h1 strong{color:#eee;font-weight:500}
 │                    187.3                               │ 18–50  FreeSerif18pt
 │━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━│
 │  ████████████████░░░░░░░░                              │ 54–57  进度条 4px
-│  flow 4.2     187/225g    01:23                        │ 61–72  FreeSerif9pt
+│  flow 4.2     187/225g    01:23                        │ 61–77  FreeSerif12pt
 │────────────────────────────────────────────────────────│
 │ ● BREWING                                              │ 76–82  FreeSerif9pt
 │────────────────────────────────────────────────────────│
-│  ▁▂▃▅▆▇▆▅▃▂▁▁▂▃▅▆▇▆▅▃▂▁▁▂▃▅▆▇▆▅▃▂▁                  │ 84–135 迷你曲线 51px
+│  ▁▂▃▅▆▇▆▅▃▂▁▁▂▃▅▆▇▆▅▃▂▁▁▂▃▅▆▇▆▅▃▂▁                  │ 90–135 迷你曲线 45px
 └────────────────────────────────────────────────────────┘</div>
 
 <script>
@@ -89,20 +89,20 @@ function mainScreen(){
     <rect x="10" y="55" width="220" height="3" rx="1.5" fill="#3A2A1A"/>
     <rect x="10" y="55" width="165" height="3" rx="1.5" fill="#C4956A" opacity="0.85"/>
 
-    <!-- 信息行：flow / 注水量 / time 同层 -->
-    <text x="10" y="70" fill="#D4A574" font-size="8" font-weight="600" ${F}>flow ${f.toFixed(1)}</text>
-    <text x="54" y="70" fill="#8A7A60" font-size="6" ${F}>g/s</text>
-    <text x="120" y="70" text-anchor="middle" fill="#8A7A60" font-size="8" ${F}>${w.toFixed(0)}/${D.target}g</text>
-    <text x="${W-10}" y="70" text-anchor="end" fill="#D4A574" font-size="8" font-weight="600" ${F}>${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
+    <!-- 信息行：flow / 注水量 / time 同层（FreeSerif12pt 放大） -->
+    <text x="10" y="70" fill="#D4A574" font-size="11" font-weight="600" ${F}>flow ${f.toFixed(1)}</text>
+    <text x="62" y="70" fill="#8A7A60" font-size="8" ${F}>g/s</text>
+    <text x="120" y="70" text-anchor="middle" fill="#8A7A60" font-size="11" font-weight="600" ${F}>${w.toFixed(0)}/${D.target}g</text>
+    <text x="${W-10}" y="70" text-anchor="end" fill="#D4A574" font-size="11" font-weight="600" ${F}>${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
 
-    <line x1="0" y1="76" x2="${W}" y2="76" stroke="#3A2A1A" stroke-width="0.5"/>
+    <line x1="0" y1="80" x2="${W}" y2="80" stroke="#3A2A1A" stroke-width="0.5"/>
 
     <!-- BREWING -->
-    <circle cx="10" cy="82" r="2.5" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
-    <text x="17" y="82" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="7" font-weight="600" letter-spacing="0.5" ${F}>${D.running?'BREWING':'STANDBY'}</text>
+    <circle cx="10" cy="86" r="2.5" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
+    <text x="17" y="86" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="7" font-weight="600" letter-spacing="0.5" ${F}>${D.running?'BREWING':'STANDBY'}</text>
 
-    <!-- 迷你曲线 — 大幅扩展区域 -->
-    <polyline points="0,132 6,129 14,126 22,122 32,117 44,112 58,108 74,104 90,101 108,100 126,101 144,103 160,106 176,109 190,112 206,114 220,113 240,110"
+    <!-- 迷你曲线（y:90-135） -->
+    <polyline points="0,132 6,130 14,127 22,123 32,118 44,113 58,108 74,104 90,102 108,101 126,103 144,105 160,108 176,111 190,114 206,115 220,113 240,110"
       fill="none" stroke="#D4A574" stroke-width="1.5" opacity="0.45" stroke-linecap="round" stroke-linejoin="round"/>
     <polygon points="0,135 0,132 6,129 14,126 22,122 32,117 44,112 58,108 74,104 90,101 108,100 126,101 144,103 160,106 176,109 190,112 206,114 220,113 240,110 240,135"
       fill="url(#curveGrad)" opacity="0.08"/>
