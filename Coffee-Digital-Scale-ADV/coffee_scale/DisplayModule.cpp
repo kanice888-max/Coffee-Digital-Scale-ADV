@@ -153,17 +153,20 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
     // === 细分隔 ===
     M5.Lcd.drawFastHLine(0, 96, SCREEN_WIDTH, COLOR_DIVIDER);
 
-    // === 状态指示 + 目标水量 + 进度条（y:99-118）===
+    // === 状态指示（y:99-104）===
     bool running = timer->isRunning();
     uint16_t ledColor = running ? COLOR_STATUS_ON : COLOR_STATUS_OFF;
     uint16_t statColor = running ? COLOR_STATUS_ON : COLOR_TEXT_DIM;
-    M5.Lcd.fillCircle(10, 104, 3, ledColor);
+    M5.Lcd.fillCircle(10, 103, 3, ledColor);
     M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(statColor, COLOR_BG);
     M5.Lcd.setTextDatum(TL_DATUM);
-    M5.Lcd.drawString(running ? "BREWING" : "STANDBY", 18, 99);
+    M5.Lcd.drawString(running ? "BREWING" : "STANDBY", 18, 98);
 
-    // 目标水量（右上）
+    // 进度条（y:107-110）
+    _drawProgressBar(10, 107, SCREEN_WIDTH - 20, 4, weight, _brewTarget);
+
+    // 目标水量（进度条下方，y:113）
     char targetStr[16];
     if (_brewTarget > 0) {
         snprintf(targetStr, sizeof(targetStr), "%.0f/%.0fg", weight, _brewTarget);
@@ -172,11 +175,8 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
     }
     M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(_targetReached ? COLOR_SUCCESS : COLOR_TEXT_DIM, COLOR_BG);
-    M5.Lcd.setTextDatum(TR_DATUM);
-    M5.Lcd.drawString(targetStr, SCREEN_WIDTH - 10, 99);
-
-    // 进度条（y:110-114）
-    _drawProgressBar(10, 110, SCREEN_WIDTH - 20, 4, weight, _brewTarget);
+    M5.Lcd.setTextDatum(TC_DATUM);
+    M5.Lcd.drawString(targetStr, SCREEN_WIDTH / 2, 113);
 
     // === 迷你曲线（y:120-135）===
     int count = flowCalc->getHistoryCount();
