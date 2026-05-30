@@ -7,14 +7,12 @@
  * - 自动计时（重量变化触发）
  * - 重量/流量历史曲线
  * - SD 卡数据记录
+ * - 水分比/粉量设置 + 目标水量声音提示
  *
  * 硬件：
  * - M5Stack Cardputer-adv (ESP32-S3)
  * - HX711 模块：DT/DOUT → G2, SCK/CLK → G1
  * - MicroSD 卡
- *
- * 作者：Coffee Digital Scale Team
- * 版本：1.0.0
  */
 
 #include <M5Unified.h>
@@ -49,15 +47,38 @@ bool sessionActive = false;
 // ========== 错误处理 ==========
 int sensorErrorCount = 0;
 
+// ========== 冲煮配方参数 ==========
+float waterRatio = DEFAULT_RATIO;       // 水分比（如 1:15）
+float coffeeDose = DEFAULT_DOSE;        // 粉量 (g)
+float targetWater = 0;                  // 目标注水量 (g)
+bool targetReached = false;             // 是否已到达目标水量
+
+// ========== 键盘输入状态 ==========
+bool inputMode = false;
+String inputBuffer = "";
+char inputTarget = 0;  // 'r' = ratio, 'd' = dose
+
+// ========== 函数声明 ==========
+void updateSensor(unsigned long now);
+void updateDisplay();
+void manageSession();
+void checkSensorHealth(float weight);
+void loadSettings();
+void loadCalibration();
+void saveSettings();
+void playTargetReachedSound();
+void handleKeyboardInput(DisplayModule* disp);
+
 // ========== 初始化 ==========
 void setup() {
-    // 初始化 M5Stack
     auto cfg = M5.config();
     M5.begin(cfg);
+    // 初始化扬声器
+    M5.Speaker.begin();
 
     Serial.begin(115200);
     Serial.println(F("\n=== Coffee Digital Scale ==="));
-    Serial.println(F("Version: 1.0.0"));
+    Serial.println(F("Version: 1.1.0"));
 
     // 初始化显示模块
     displayModule.init();
@@ -67,15 +88,14 @@ void setup() {
     bool sdReady = storageModule.init();
     if (sdReady) {
         Serial.println(F("Storage initialized"));
-
-        // 加载用户设置
         loadSettings();
-
-        // 加载校准参数
         loadCalibration();
     } else {
         Serial.println(F("Storage initialization failed - continuing without SD"));
     }
+
+    // 计算目标水量
+    targetWater = waterRatio * coffeeDose;
 
     // 初始化传感器模块
     displayModule.showMessage(F("Init Sensor..."), 500);
@@ -92,6 +112,7 @@ void setup() {
 
     // 切换到主界面
     displayModule.setPage(DisplayModule::PAGE_MAIN);
+    displayModule.setBrewParams(waterRatio, coffeeDose, targetWater);
 
     // 初始化绝对定时器
     nextSensorUpdate = millis() + SENSOR_UPDATE_INTERVAL;
@@ -99,21 +120,26 @@ void setup() {
     nextSessionCheck = millis() + SESSION_CHECK_INTERVAL;
 
     Serial.println(F("Initialization complete"));
+    Serial.print(F("Target water: "));
+    Serial.println(targetWater);
     isRunning = true;
 }
 
-// ========== 主循环（绝对时间对齐） ==========
+// ========== 主循环 ==========
 void loop() {
     if (!isRunning) return;
 
     unsigned long now = millis();
     M5.update();
 
-    // 传感器更新（10Hz，绝对时间对齐消除漂移）
+    // 处理 Cardputer 键盘输入
+    handleKeyboardInput(&displayModule);
+
+    // 传感器更新（10Hz）
     if (now >= nextSensorUpdate) {
         updateSensor(now);
         nextSensorUpdate += SENSOR_UPDATE_INTERVAL;
-        if (nextSensorUpdate < now) {  // 防止长时间延迟后疯狂追赶
+        if (nextSensorUpdate < now) {
             nextSensorUpdate = now + SENSOR_UPDATE_INTERVAL;
         }
     }
@@ -127,7 +153,7 @@ void loop() {
         }
     }
 
-    // 会话管理（每 5 秒检查一次）
+    // 会话管理
     if (now >= nextSessionCheck) {
         manageSession();
         nextSessionCheck += SESSION_CHECK_INTERVAL;
@@ -139,23 +165,26 @@ void loop() {
 
 // ========== 传感器更新 ==========
 void updateSensor(unsigned long now) {
-    // 读取重量
     float weight = weightSensor.getWeight();
-
-    // 检查传感器异常
     checkSensorHealth(weight);
-
-    // 更新缓存
     currentWeight = weight;
 
-    // 更新流量计算
     flowCalculator.update(weight, now);
     currentFlowRate = flowCalculator.getFlowRate();
 
-    // 更新计时器
     timerModule.checkAutoStart(weight);
 
-    // 记录数据（仅在计时运行时）
+    // 检查是否达到目标水量
+    if (timerModule.isRunning() && !targetReached && weight >= targetWater && targetWater > 0) {
+        targetReached = true;
+        playTargetReachedSound();
+    }
+
+    // 计时器重置时重置目标状态
+    if (!timerModule.isRunning() && targetReached) {
+        targetReached = false;
+    }
+
     if (timerModule.isRunning() && storageModule.isSDReady()) {
         if (!sessionActive) {
             storageModule.beginNewSession();
@@ -167,13 +196,13 @@ void updateSensor(unsigned long now) {
 
 // ========== 显示更新 ==========
 void updateDisplay() {
-    // 使用缓存的重量和流量，避免重复读取传感器
     displayModule.update(currentWeight, currentFlowRate, &timerModule, &flowCalculator);
+    displayModule.setBrewParams(waterRatio, coffeeDose, targetWater);
+    displayModule.setTargetReached(targetReached);
 }
 
 // ========== 会话管理 ==========
 void manageSession() {
-    // 计时停止且有数据时，结束会话
     if (!timerModule.isRunning() && sessionActive) {
         storageModule.endSession();
         sessionActive = false;
@@ -183,7 +212,6 @@ void manageSession() {
 
 // ========== 健康检查 ==========
 void checkSensorHealth(float weight) {
-    // 检测传感器读数异常（从有重量突然变为接近 0）
     if (fabs(weight) < 0.01f && currentWeight > 10) {
         sensorErrorCount++;
         if (sensorErrorCount >= MAX_SENSOR_ERRORS) {
@@ -195,15 +223,126 @@ void checkSensorHealth(float weight) {
     }
 }
 
+// ========== 目标水量声音提示 ==========
+void playTargetReachedSound() {
+    M5.Speaker.tone(880, 200);
+    delay(250);
+    M5.Speaker.tone(1320, 200);
+    delay(250);
+    M5.Speaker.tone(1760, 400);
+    Serial.println(F("Target water reached!"));
+}
+
+// ========== Cardputer 键盘输入处理 ==========
+void handleKeyboardInput(DisplayModule* disp) {
+    if (M5.Keyboard.isChange()) {
+        if (M5.Keyboard.isPressed()) {
+            auto keys = M5.Keyboard.keys();
+            if (!keys.isEmpty()) {
+                char key = keys.front();
+
+                // 设置页键盘输入
+                if (disp->getCurrentPage() == DisplayModule::PAGE_SETTINGS) {
+                    if (!inputMode) {
+                        // 不在输入模式 — 按键选择功能
+                        if (key == '1') {
+                            disp->setPage(DisplayModule::PAGE_MAIN);
+                            return;
+                        }
+                        if (key == 'r' || key == 'R') {
+                            inputMode = true;
+                            inputTarget = 'r';
+                            inputBuffer = "";
+                            Serial.println(F("Enter ratio: "));
+                            return;
+                        }
+                        if (key == 'd' || key == 'D') {
+                            inputMode = true;
+                            inputTarget = 'd';
+                            inputBuffer = "";
+                            Serial.println(F("Enter dose (g): "));
+                            return;
+                        }
+                    } else {
+                        // 输入模式 — 接收数字
+                        if (key >= '0' && key <= '9') {
+                            inputBuffer += key;
+                            return;
+                        }
+                        if (key == '=' || key == KEY_RETURN || key == KEY_ENTER) {
+                            float val = inputBuffer.toFloat();
+                            if (val > 0) {
+                                if (inputTarget == 'r') {
+                                    waterRatio = val;
+                                } else if (inputTarget == 'd') {
+                                    coffeeDose = val;
+                                }
+                                targetWater = waterRatio * coffeeDose;
+                                targetReached = false;
+                                Serial.print(F("Target water: "));
+                                Serial.println(targetWater);
+                                saveSettings();
+                            }
+                            inputMode = false;
+                            inputBuffer = "";
+                            return;
+                        }
+                        if (key == KEY_BACKSPACE || key == 0x08 || key == 0x7F) {
+                            if (inputBuffer.length() > 0) {
+                                inputBuffer.remove(inputBuffer.length() - 1);
+                            }
+                            return;
+                        }
+                        return;
+                    }
+                }
+
+                // 主界面键盘功能
+                if (disp->getCurrentPage() == DisplayModule::PAGE_MAIN) {
+                    if (key == '1') {
+                        disp->setPage(DisplayModule::PAGE_SETTINGS);
+                        return;
+                    }
+                }
+
+                // 重量曲线页面
+                if (key == '1') {
+                    Page nextPage = (Page)((disp->getCurrentPage() + 1) % 4);
+                    disp->setPage(nextPage);
+                }
+            }
+        }
+    }
+}
+
 // ========== 设置加载 ==========
 void loadSettings() {
     float autoStartThreshold = AUTO_START_THRESHOLD;
     float resetThreshold = RESET_THRESHOLD;
+    float ratio = DEFAULT_RATIO;
+    float dose = DEFAULT_DOSE;
 
-    if (storageModule.loadSettings(autoStartThreshold, resetThreshold)) {
+    if (storageModule.loadSettings(autoStartThreshold, resetThreshold, ratio, dose)) {
         timerModule.setAutoStartThreshold(autoStartThreshold);
         timerModule.setResetThreshold(resetThreshold);
-        Serial.println(F("Settings loaded"));
+        waterRatio = ratio;
+        coffeeDose = dose;
+        Serial.print(F("Settings loaded: ratio="));
+        Serial.print(waterRatio);
+        Serial.print(F(" dose="));
+        Serial.println(coffeeDose);
+    }
+}
+
+// ========== 设置保存 ==========
+void saveSettings() {
+    if (storageModule.isSDReady()) {
+        storageModule.saveSettings(
+            timerModule.getAutoStartThreshold(),
+            timerModule.getResetThreshold(),
+            waterRatio,
+            coffeeDose
+        );
     }
 }
 

@@ -172,7 +172,8 @@ float StorageModule::loadCalibration(float defaultFactor) {
     return defaultFactor;
 }
 
-bool StorageModule::saveSettings(float autoStartThreshold, float resetThreshold) {
+bool StorageModule::saveSettings(float autoStartThreshold, float resetThreshold,
+                                 float ratio, float dose) {
     if (!_sdReady) return false;
 
     // 验证阈值范围
@@ -198,6 +199,10 @@ bool StorageModule::saveSettings(float autoStartThreshold, float resetThreshold)
     file.print(autoStartThreshold, 2);
     file.print(F(",\"reset_threshold\":"));
     file.print(resetThreshold, 2);
+    file.print(F(",\"ratio\":"));
+    file.print(ratio, 2);
+    file.print(F(",\"dose\":"));
+    file.print(dose, 2);
     file.println(F("}"));
     file.close();
 
@@ -205,7 +210,8 @@ bool StorageModule::saveSettings(float autoStartThreshold, float resetThreshold)
     return true;
 }
 
-bool StorageModule::loadSettings(float& autoStartThreshold, float& resetThreshold) {
+bool StorageModule::loadSettings(float& autoStartThreshold, float& resetThreshold,
+                                 float& ratio, float& dose) {
     if (!_sdReady) return false;
 
     File file = SD.open(SETTINGS_FILE, FILE_READ);

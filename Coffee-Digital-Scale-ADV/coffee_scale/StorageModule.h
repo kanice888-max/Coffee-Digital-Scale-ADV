@@ -21,8 +21,10 @@ public:
     // 配置管理
     bool saveCalibration(float factor);
     float loadCalibration(float defaultFactor);
-    bool saveSettings(float autoStartThreshold, float resetThreshold);
-    bool loadSettings(float& autoStartThreshold, float& resetThreshold);
+    bool saveSettings(float autoStartThreshold, float resetThreshold,
+                       float ratio, float dose);
+    bool loadSettings(float& autoStartThreshold, float& resetThreshold,
+                      float& ratio, float& dose);
 
     // 状态
     bool isSDReady();

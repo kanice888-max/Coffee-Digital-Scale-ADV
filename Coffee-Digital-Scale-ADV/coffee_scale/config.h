@@ -20,6 +20,10 @@
 #define AUTO_START_THRESHOLD        0.5f    // 自动计时触发阈值 (g)
 #define RESET_THRESHOLD             0.3f    // 归零重置阈值 (g)
 
+// ========== 冲煮参数 ==========
+#define DEFAULT_RATIO       15.0f   // 默认水分比 1:15
+#define DEFAULT_DOSE        15.0f   // 默认粉量 15g
+
 // ========== 历史数据 ==========
 #define HISTORY_BUFFER_SIZE         240     // 曲线数据点数（屏幕宽度）
 
@@ -36,6 +40,7 @@
 #define COLOR_CURVE_FLOW    0xFC82  // 流量曲线橙琥珀 #FF8C42
 #define COLOR_STATUS_ON     0x9A52  // 运行状态暖色 #C4956A
 #define COLOR_STATUS_OFF    0x3908  // 停止状态暗褐 #3A2A1A
+#define COLOR_TARGET        0x5CCB  // 目标水量进度颜色（青绿）
 
 // ========== UI 布局 ==========
 #define SCREEN_WIDTH        240

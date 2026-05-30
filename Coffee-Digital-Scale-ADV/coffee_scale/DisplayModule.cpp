@@ -7,6 +7,10 @@ DisplayModule::DisplayModule() {
     _currentPage = PAGE_MAIN;
     _lastUpdateTime = 0;
     _lastCurveUpdateTime = 0;
+    _brewRatio = 15.0f;
+    _brewDose = 15.0f;
+    _brewTarget = 225.0f;
+    _targetReached = false;
 }
 
 void DisplayModule::init() {
@@ -85,6 +89,16 @@ void DisplayModule::showMessage(const String& message, int durationMs) {
         case PAGE_SETTINGS:      _drawSettingsPage(); break;
     }
     _drawPageIndicator();
+}
+
+void DisplayModule::setBrewParams(float ratio, float dose, float target) {
+    _brewRatio = ratio;
+    _brewDose = dose;
+    _brewTarget = target;
+}
+
+void DisplayModule::setTargetReached(bool reached) {
+    _targetReached = reached;
 }
 
 // ============================================================
@@ -270,41 +284,59 @@ void DisplayModule::_drawSettingsPage() {
     M5.Lcd.drawFastHLine(0, TITLE_HEIGHT, SCREEN_WIDTH, COLOR_ACCENT);
     _drawPageIndicator();
 
-    // 设置项卡
-    M5.Lcd.fillRoundRect(8, 24, 224, 28, 3, COLOR_BG_DARK);
+    // 水分比设置行
+    M5.Lcd.fillRoundRect(8, 22, 224, 34, 3, COLOR_BG_DARK);
     M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
     M5.Lcd.setTextDatum(TL_DATUM);
-    M5.Lcd.drawString("start", 14, 27);
-    M5.Lcd.drawString("reset", 128, 27);
-
+    M5.Lcd.drawString("ratio", 14, 25);
     M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG_DARK);
-    M5.Lcd.drawString("0.5 g", 14, 38);
-    M5.Lcd.drawString("0.3 g", 128, 38);
-
-    M5.Lcd.fillRoundRect(8, 56, 224, 28, 3, COLOR_BG_DARK);
+    char ratioStr[10];
+    snprintf(ratioStr, sizeof(ratioStr), "1:%.0f", _brewRatio);
+    M5.Lcd.drawString(ratioStr, 14, 38);
     M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
-    M5.Lcd.drawString("factor", 14, 59);
+    M5.Lcd.drawString("[r]", 100, 38);
+
+    // 粉量设置行
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
+    M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
+    M5.Lcd.drawString("dose", 128, 25);
     M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG_DARK);
-    M5.Lcd.drawString("420.0", 14, 70);
+    char doseStr[10];
+    snprintf(doseStr, sizeof(doseStr), "%.0f g", _brewDose);
+    M5.Lcd.drawString(doseStr, 128, 38);
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
+    M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
+    M5.Lcd.drawString("[d]", 210, 38);
 
+    // 目标水量
+    M5.Lcd.fillRoundRect(8, 60, 224, 24, 3, COLOR_BG_DARK);
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
+    M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
+    M5.Lcd.drawString("target water", 14, 63);
+    M5.Lcd.setFreeFont(&FreeSerif12pt7b);
+    M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG_DARK);
+    char targetStr[12];
+    snprintf(targetStr, sizeof(targetStr), "%.0f g", _brewTarget);
+    M5.Lcd.drawString(targetStr, 130, 63);
+
+    // 校准因子
     M5.Lcd.fillRoundRect(8, 88, 224, 22, 3, COLOR_BG_DARK);
     M5.Lcd.setFreeFont(&FreeSerif9pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
-    M5.Lcd.drawString("key", 14, 91);
+    M5.Lcd.drawString("factor", 14, 91);
     M5.Lcd.setFreeFont(&FreeSerif12pt7b);
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG_DARK);
-    M5.Lcd.drawString("1: page", 48, 91);
-    M5.Lcd.drawString("t: tare", 126, 91);
+    M5.Lcd.drawString("420.0", 74, 91);
 
-    // 底部返回提示
-    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
+    // 底部快捷键提示
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
     M5.Lcd.setTextDatum(TC_DATUM);
-    M5.Lcd.drawString("[ 1 ] RETURN", SCREEN_WIDTH / 2, SCREEN_HEIGHT - 10);
+    M5.Lcd.setFreeFont(&FreeSerif9pt7b);
+    M5.Lcd.drawString("1:return  r:ratio  d:dose  =:confirm", SCREEN_WIDTH / 2, SCREEN_HEIGHT - 10);
 }
 
 // ============================================================
@@ -374,6 +406,20 @@ void DisplayModule::_drawTimeAxis(unsigned long timeMin, unsigned long timeMax, 
 
     snprintf(label, sizeof(label), "%.0f", endSec);
     M5.Lcd.drawString(label, x + w, y);
+}
+
+void DisplayModule::_drawProgressBar(int x, int y, int w, int h, float current, float target) {
+    // 背景
+    M5.Lcd.drawRect(x, y, w, h, COLOR_DIVIDER);
+    // 填充
+    if (target > 0) {
+        float pct = current / target;
+        if (pct > 1.0f) pct = 1.0f;
+        if (pct > 0) {
+            uint16_t fillColor = _targetReached ? COLOR_SUCCESS : COLOR_TARGET;
+            M5.Lcd.fillRect(x + 1, y + 1, (int)((w - 2) * pct), h - 2, fillColor);
+        }
+    }
 }
 
 void DisplayModule::_drawPageIndicator() {

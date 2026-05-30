@@ -17,6 +17,8 @@ public:
     void update(float weight, float flowRate, TimerModule* timer, FlowCalculator* flowCalc);
     void handleInput();
     void showMessage(const String& message, int durationMs = 1000);
+    void setBrewParams(float ratio, float dose, float target);
+    void setTargetReached(bool reached);
 
 private:
     Page _currentPage;
@@ -35,8 +37,15 @@ private:
     void _drawGrid(int x, int y, int w, int h);
     void _drawAxisLabels(float minVal, float maxVal, int x, int y, int h);
     void _drawTimeAxis(unsigned long timeMin, unsigned long timeMax, int x, int y, int w);
+    void _drawProgressBar(int x, int y, int w, int h, float current, float target);
     void _drawPageIndicator();
     void _clearArea(int x, int y, int w, int h);
+
+    // 冲煮参数缓存
+    float _brewRatio;
+    float _brewDose;
+    float _brewTarget;
+    bool _targetReached;
 };
 
 #endif
