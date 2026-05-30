@@ -39,7 +39,6 @@ private:
 
     String _generateFileName();
     bool _ensureDirectory(const char* path);
-    String _getTimestamp();
 };
 
 #endif

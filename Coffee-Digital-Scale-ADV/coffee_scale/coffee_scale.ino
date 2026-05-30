@@ -32,10 +32,10 @@ TimerModule timerModule;
 DisplayModule displayModule;
 StorageModule storageModule;
 
-// ========== 定时器 ==========
-unsigned long lastSensorUpdate = 0;
-unsigned long lastDisplayUpdate = 0;
-unsigned long lastSessionCheck = 0;
+// ========== 定时器（绝对时间对齐） ==========
+unsigned long nextSensorUpdate = 0;
+unsigned long nextDisplayUpdate = 0;
+unsigned long nextSessionCheck = 0;
 
 // ========== 状态缓存 ==========
 float currentWeight = 0;
@@ -92,33 +92,47 @@ void setup() {
     // 切换到主界面
     displayModule.setPage(DisplayModule::PAGE_MAIN);
 
+    // 初始化绝对定时器
+    nextSensorUpdate = millis() + SENSOR_UPDATE_INTERVAL;
+    nextDisplayUpdate = millis() + DISPLAY_UPDATE_INTERVAL;
+    nextSessionCheck = millis() + SESSION_CHECK_INTERVAL;
+
     Serial.println(F("Initialization complete"));
     isRunning = true;
 }
 
-// ========== 主循环 ==========
+// ========== 主循环（绝对时间对齐） ==========
 void loop() {
     if (!isRunning) return;
 
     unsigned long now = millis();
     M5.update();
 
-    // 传感器更新（10Hz）
-    if (now - lastSensorUpdate >= SENSOR_UPDATE_INTERVAL) {
+    // 传感器更新（10Hz，绝对时间对齐消除漂移）
+    if (now >= nextSensorUpdate) {
         updateSensor(now);
-        lastSensorUpdate = now;
+        nextSensorUpdate += SENSOR_UPDATE_INTERVAL;
+        if (nextSensorUpdate < now) {  // 防止长时间延迟后疯狂追赶
+            nextSensorUpdate = now + SENSOR_UPDATE_INTERVAL;
+        }
     }
 
     // 显示更新（10Hz）
-    if (now - lastDisplayUpdate >= DISPLAY_UPDATE_INTERVAL) {
+    if (now >= nextDisplayUpdate) {
         updateDisplay();
-        lastDisplayUpdate = now;
+        nextDisplayUpdate += DISPLAY_UPDATE_INTERVAL;
+        if (nextDisplayUpdate < now) {
+            nextDisplayUpdate = now + DISPLAY_UPDATE_INTERVAL;
+        }
     }
 
     // 会话管理（每 5 秒检查一次）
-    if (now - lastSessionCheck >= SESSION_CHECK_INTERVAL) {
+    if (now >= nextSessionCheck) {
         manageSession();
-        lastSessionCheck = now;
+        nextSessionCheck += SESSION_CHECK_INTERVAL;
+        if (nextSessionCheck < now) {
+            nextSessionCheck = now + SESSION_CHECK_INTERVAL;
+        }
     }
 }
 

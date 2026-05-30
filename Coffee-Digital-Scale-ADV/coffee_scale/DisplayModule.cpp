@@ -83,16 +83,13 @@ void DisplayModule::update(float weight, float flowRate, TimerModule* timer, Flo
 }
 
 void DisplayModule::handleInput() {
-    M5.update();
-
-    // 使用键盘输入（Cardputer 没有传统的 BtnA/BtnB/BtnC）
-    // Cardputer 使用内置键盘，需要通过 Serial 或其他方式检测
-    // 暂时使用简单的时间间隔切换页面（每 10 秒自动切换）
-    static unsigned long lastPageChange = 0;
-    if (millis() - lastPageChange > 10000) {
-        Page nextPage = (Page)((_currentPage + 1) % 4);
-        setPage(nextPage);
-        lastPageChange = millis();
+    // 使用串口输入模拟键盘（Cardputer 无传统 BtnA）
+    if (Serial.available() > 0) {
+        char key = Serial.read();
+        if (key == '1') {  // 按 '1' 键切换页面
+            Page nextPage = (Page)((_currentPage + 1) % 4);
+            setPage(nextPage);
+        }
     }
 }
 

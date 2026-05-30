@@ -272,9 +272,3 @@ bool StorageModule::_ensureDirectory(const char* path) {
     return true;
 }
 
-String StorageModule::_getTimestamp() {
-    // 简单的时间戳（使用 millis）
-    char timestamp[20];
-    snprintf(timestamp, sizeof(timestamp), "%lu", millis());
-    return String(timestamp);
-}

@@ -65,23 +65,6 @@
 #define SENSOR_TIMEOUT_MS   2000  // 传感器初始化超时 (ms)
 
 // ========== 内存优化 ==========
-#define USE_PROGMEM         1     // 使用 PROGMEM 存储常量字符串
 #define MINIMAL_SERIAL      1     // 减少串口输出
-
-// ========== PROGMEM 字符串常量 ==========
-#if USE_PROGMEM
-static const char PROGMEM STR_INIT[] = "Initializing...";
-static const char PROGMEM STR_TARING[] = "Taring...";
-static const char PROGMEM STR_READY[] = "Ready!";
-static const char PROGMEM STR_SENSOR_ERROR[] = "Sensor Error!";
-static const char PROGMEM STR_SD_ERROR[] = "SD Error";
-static const char PROGMEM STR_CALIBRATING[] = "Calibrating...";
-static const char PROGMEM STR_POUR_OVER[] = "Pour Over Scale";
-static const char PROGMEM STR_WEIGHT[] = "Weight";
-static const char PROGMEM STR_FLOW[] = "Flow";
-static const char PROGMEM STR_TIME[] = "Time";
-static const char PROGMEM STR_FLOW_UNIT[] = "g/s";
-static const char PROGMEM STR_WEIGHT_UNIT[] = "g";
-#endif
 
 #endif
