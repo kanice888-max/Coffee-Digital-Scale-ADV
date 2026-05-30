@@ -10,8 +10,8 @@ StorageModule::StorageModule() {
 bool StorageModule::init() {
     Serial.println(F("Initializing SD card..."));
 
-    // 初始化 SPI
-    SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
+    // 初始化 SPI（使用 Cardputer 的 SD 卡 SPI 引脚）
+    SPI.begin(SD_CLK_PIN, SD_MISO_PIN, SD_MOSI_PIN, SD_CS_PIN);
 
     // 尝试初始化 SD 卡
     if (!SD.begin(SD_CS_PIN)) {

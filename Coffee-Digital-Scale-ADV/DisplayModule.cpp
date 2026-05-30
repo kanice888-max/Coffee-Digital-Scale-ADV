@@ -83,10 +83,19 @@ void DisplayModule::update(float weight, float flowRate, TimerModule* timer, Flo
 }
 
 void DisplayModule::handleInput() {
-    // 按钮 A 切换页面
-    if (M5.BtnA.wasPressed()) {
-        Page nextPage = (Page)((_currentPage + 1) % 4);
-        setPage(nextPage);
+    M5.update();
+
+    // 使用键盘输入（Cardputer 没有传统的 BtnA/BtnB/BtnC）
+    if (M5.Keyboard.isChange()) {
+        if (M5.Keyboard.isPressed()) {
+            // 按 '1' 键切换页面
+            if (M5.Keyboard.isKeyPressed('1')) {
+                Page nextPage = (Page)((_currentPage + 1) % 4);
+                setPage(nextPage);
+            }
+            // 按 '2' 键手动去皮（需要在主程序中处理）
+            // 按 '3' 键开始/停止计时（需要在主程序中处理）
+        }
     }
 }
 
@@ -244,7 +253,7 @@ void DisplayModule::_drawSettingsPage() {
     M5.Lcd.setTextDatum(TL_DATUM);
 
     M5.Lcd.drawString(F("Settings"), 10, TITLE_HEIGHT + 10);
-    M5.Lcd.drawString(F("Press BtnA to return"), 10, TITLE_HEIGHT + 40);
+    M5.Lcd.drawString(F("Press '1' to return"), 10, TITLE_HEIGHT + 40);
 }
 
 void DisplayModule::_drawMainBackground() {

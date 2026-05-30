@@ -51,7 +51,10 @@
 #define SESSION_CHECK_INTERVAL  5000  // 会话检查间隔 (ms)
 
 // ========== SD 卡 ==========
-#define SD_CS_PIN           4     // SD 卡片选引针（Cardputer 默认）
+#define SD_CS_PIN           12    // SD 卡 CS 引脚（G12）
+#define SD_MOSI_PIN         14    // SD 卡 MOSI 引脚（G14）
+#define SD_MISO_PIN         39    // SD 卡 MISO 引脚（G39）
+#define SD_CLK_PIN          40    // SD 卡 CLK 引脚（G40）
 #define DATA_LOG_DIR        "/coffee_data"
 #define CONFIG_DIR          "/config"
 #define CALIBRATION_FILE    "/config/calibration.json"
