@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cardputer-ADV 手冲咖啡秤 — UI Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #ccc;
+  gap: 30px;
+  padding: 30px;
+}
+h2 { color: #FD20; font-size: 16px; letter-spacing: 2px; font-weight: 400; }
+.screen {
+  width: 640px; height: 360px;
+  background: #0d1b2a;
+  border-radius: 16px;
+  border: 3px solid #333;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  position: relative;
+  overflow: hidden;
+}
+.title-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 48px;
+  background: #0d1b2a;
+  border-bottom: 1px solid #4208;
+  display: flex; align-items: center;
+  color: #FD20;
+  font-size: 16px; letter-spacing: 1px;
+}
+.title-bar .label { position: absolute; left: 14px; top: 14px; }
+.title-bar .page-name { position: absolute; left: 50%; transform: translateX(-50%); font-size: 13px; color: #F7DE; }
+.title-bar .dots { position: absolute; right: 40px; top: 20px; display: flex; gap: 6px; }
+.title-bar .dot { width: 7px; height: 7px; border-radius: 50%; }
+.title-bar .dot.active { background: #FD20; }
+.title-bar .dot.inactive { background: #4208; }
+.title-bar .icon { position: absolute; right: 14px; top: 12px; font-size: 20px; }
+
+/* 主页面内容 */
+.page-content { position: absolute; top: 48px; left: 0; right: 0; bottom: 0; display: none; }
+.page-content.active { display: block; }
+
+/* 主界面 */
+.weight-area {
+  position: absolute; top: 0; left: 0; right: 0; height: 152px;
+  display: flex; align-items: center; justify-content: center;
+}
+.weight-value { font-size: 72px; font-weight: 700; color: #F7DE; letter-spacing: 2px; }
+.weight-value .unit { font-size: 32px; color: #F7DE; margin-left: 6px; }
+.divider { position: absolute; left: 0; right: 0; height: 1px; background: #4208; }
+.divider-1 { top: 152px; }
+.divider-2 { top: 205px; }
+.status-bar {
+  position: absolute; top: 154px; left: 0; right: 0; height: 50px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px; color: #F7DE; font-size: 15px;
+}
+.indicator {
+  position: absolute; top: 204px; left: 14px;
+  display: flex; align-items: center; gap: 8px; font-size: 12px;
+}
+.indicator .led { width: 8px; height: 8px; border-radius: 50%; }
+.indicator .led.on { background: #07E0; box-shadow: 0 0 8px #07E0; }
+.indicator .led.off { background: #4208; }
+.mini-curve {
+  position: absolute; top: 210px; left: 0; right: 0; height: 100px;
+}
+.curve-svg { width: 100%; height: 100%; }
+
+/* 曲线页面 */
+.curve-page {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  color: #F7DE; font-size: 11px;
+  padding: 10px 5px;
+}
+.curve-page .chart-area {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+}
+.curve-page .chart-title { color: #FD20; font-size: 12px; margin-bottom: 4px; }
+.curve-page svg { flex: 1; width: 100%; }
+.curve-page .time-labels {
+  display: flex; justify-content: space-between;
+  color: #4208; font-size: 10px; padding: 0 5px;
+}
+
+/* 设置页面 */
+.settings-page {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  color: #F7DE; font-size: 14px; padding: 20px;
+  line-height: 2;
+}
+.settings-page .title { color: #FD20; margin-bottom: 10px; }
+.settings-page .hint { color: #4208; font-size: 12px; margin-top: 10px; }
+
+.controls {
+  display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+}
+.control-btn {
+  background: #1e1e3a; border: 1px solid #333; border-radius: 10px;
+  padding: 10px 18px; color: #ccc; font-size: 13px;
+  cursor: pointer; transition: all 0.2s;
+}
+.control-btn:hover { background: #2a2a4a; border-color: #FD20; }
+.control-btn kbd {
+  background: #333; padding: 2px 8px; border-radius: 4px;
+  font-size: 12px; margin-right: 6px;
+}
+.key-hint {
+  background: #111; padding: 12px 24px; border-radius: 8px;
+  font-size: 13px; color: #888;
+}
+pre { background: #111; padding: 16px 24px; border-radius: 8px; font-size: 13px; color: #888; max-width: 640px; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<h2>☕ CARDputer-ADV 咖啡秤 UI</h2>
+
+<!-- 屏幕 -->
+<div class="screen" id="screen">
+  <div class="title-bar">
+    <span class="label" id="pageIcon">☕</span>
+    <span class="page-name" id="pageName">Main</span>
+    <div class="dots" id="pageDots">
+      <div class="dot active"></div>
+      <div class="dot inactive"></div>
+      <div class="dot inactive"></div>
+      <div class="dot inactive"></div>
+    </div>
+    <div class="icon">☕</div>
+  </div>
+
+  <!-- 页面 0: 主界面 -->
+  <div class="page-content active" id="page0">
+    <div class="weight-area">
+      <div class="weight-value" id="weightDisplay">0.0 <span class="unit">g</span></div>
+    </div>
+    <div class="divider divider-1"></div>
+    <div class="status-bar">
+      <div><span style="color:#888">Flow:</span> <span id="flowDisplay">0.0 g/s</span></div>
+      <div style="text-align:right"><span style="color:#888">Time:</span> <span id="timeDisplay">00:00.0</span></div>
+    </div>
+    <div class="divider divider-2"></div>
+    <div class="indicator">
+      <div class="led off" id="timerLed"></div>
+      <span id="timerStatus">STOPPED</span>
+    </div>
+    <div class="mini-curve">
+      <svg class="curve-svg" viewBox="0 0 240 36" preserveAspectRatio="none">
+        <polyline id="curveLine" fill="none" stroke="#FD20" stroke-width="1.5" points=""/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 页面 1: 重量曲线 -->
+  <div class="page-content" id="page1">
+    <div class="curve-page">
+      <div class="chart-area">
+        <div class="chart-title">Weight (g)</div>
+        <svg viewBox="0 0 170 130" preserveAspectRatio="xMidYMid meet">
+          <rect x="0" y="0" width="170" height="110" fill="none" stroke="#4208" stroke-width="0.5"/>
+          <polyline id="weightCurveSvg" fill="none" stroke="#FD20" stroke-width="1.5" points=""/>
+          <text x="5" y="15" fill="#4208" font-size="8" id="weightMaxLabel">200</text>
+          <text x="5" y="105" fill="#4208" font-size="8">0</text>
+        </svg>
+        <div class="time-labels">
+          <span id="timeStartLabel">0s</span>
+          <span id="timeEndLabel">24s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页面 2: 流量曲线 -->
+  <div class="page-content" id="page2">
+    <div class="curve-page">
+      <div class="chart-area">
+        <div class="chart-title">Flow (g/s)</div>
+        <svg viewBox="0 0 170 130" preserveAspectRatio="xMidYMid meet">
+          <rect x="0" y="0" width="170" height="110" fill="none" stroke="#4208" stroke-width="0.5"/>
+          <polyline id="flowCurveSvg" fill="none" stroke="#07FF" stroke-width="1.5" points=""/>
+          <text x="5" y="15" fill="#4208" font-size="8" id="flowMaxLabel">10</text>
+          <text x="5" y="105" fill="#4208" font-size="8">0</text>
+        </svg>
+        <div class="time-labels">
+          <span>0s</span>
+          <span id="flowTimeEnd">24s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页面 3: 设置 -->
+  <div class="page-content" id="page3">
+    <div class="settings-page">
+      <div class="title">Settings</div>
+      <div>Auto-start threshold: 0.5 g</div>
+      <div>Reset threshold: 0.3 g</div>
+      <div>Calibration factor: 420.0</div>
+      <div class="hint">Press '1' to return</div>
+    </div>
+  </div>
+</div>
+
+<!-- 控制 -->
+<div class="controls">
+  <div class="control-btn" onclick="addDrop(5)"><kbd>⬇</kbd> 倒水 5g/s</div>
+  <div class="control-btn" onclick="addDrop(10)"><kbd>⬇</kbd> 倒水 10g/s</div>
+  <div class="control-btn" onclick="removeWeight()"><kbd>⬆</kbd> 移走杯子</div>
+  <div class="control-btn" onclick="switchPage(1)"><kbd>1</kbd> 切换页面</div>
+  <div class="control-btn" onclick="resetSim()"><kbd>↺</kbd> 重置</div>
+</div>
+
+<div class="key-hint">📌 按键盘 <kbd style="background:#333;padding:2px 8px;border-radius:4px;color:#FD20">1</kbd> 切换页面  —  点击按钮模拟操作</div>
+
+<script>
+let weight = 0, flow = 0, time = 0, running = false, points = [], lastDrop = 0;
+let currentPage = 0;
+const PAGE_NAMES = ['Main', 'Weight Curve', 'Flow Curve', 'Settings'];
+const PAGE_ICONS = ['☕', '📈', '📊', '⚙'];
+
+// 切换页面
+function switchPage(dir) {
+  currentPage = (currentPage + 1) % 4;
+  // 隐藏所有页面
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('page' + i).classList.remove('active');
+  }
+  document.getElementById('page' + currentPage).classList.add('active');
+  document.getElementById('pageName').textContent = PAGE_NAMES[currentPage];
+  document.getElementById('pageIcon').textContent = PAGE_ICONS[currentPage];
+  // 更新点指示器
+  let dots = document.querySelectorAll('.title-bar .dot');
+  dots.forEach((d, i) => {
+    d.className = 'dot ' + (i === currentPage ? 'active' : 'inactive');
+  });
+  // 如进入曲线页面，更新曲线
+  if (currentPage === 1 || currentPage === 2) updateCurves();
+}
+
+// 更新显示
+function updateDisplay() {
+  document.getElementById('weightDisplay').innerHTML = weight.toFixed(1) + ' <span class="unit">g</span>';
+  document.getElementById('flowDisplay').textContent = flow.toFixed(1) + ' g/s';
+  let mins = Math.floor(time / 60), secs = Math.floor(time % 60), tenth = Math.floor((time * 10) % 10);
+  document.getElementById('timeDisplay').textContent =
+    String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0') + '.' + tenth;
+  let led = document.getElementById('timerLed');
+  let status = document.getElementById('timerStatus');
+  if (running) {
+    led.className = 'led on'; status.textContent = 'RUNNING'; status.style.color = '#07E0';
+  } else {
+    led.className = 'led off'; status.textContent = 'STOPPED'; status.style.color = '#4208';
+  }
+  // 迷你曲线
+  let maxPts = 60;
+  if (points.length > maxPts) points = points.slice(-maxPts);
+  let poly = document.getElementById('curveLine');
+  if (points.length > 1) {
+    let minW = Math.min(...points), maxW = Math.max(...points);
+    let r = maxW - minW; if (r < 5) { minW -= 1; maxW += 4; }
+    let ptsStr = points.map((v, i) => {
+      let x = (i / (points.length-1)) * 220 + 10;
+      let y = 34 - ((v - minW) / (maxW - minW)) * 30;
+      return x + ',' + y;
+    }).join(' ');
+    poly.setAttribute('points', ptsStr);
+  }
+  // 更新曲线页面
+  if (currentPage === 1 || currentPage === 2) updateCurves();
+}
+
+function updateCurves() {
+  if (points.length < 2) return;
+  let pts = points.slice(-60);
+  let minW = Math.min(...pts), maxW = Math.max(...pts);
+  let r = maxW - minW; if (r < 5) { minW -= 1; maxW += 4; }
+  // 重量曲线
+  let wPts = pts.map((v, i) => {
+    let x = (i / (pts.length-1)) * 160 + 5;
+    let y = 105 - ((v - minW) / (maxW - minW)) * 90;
+    return x + ',' + y;
+  }).join(' ');
+  document.getElementById('weightCurveSvg').setAttribute('points', wPts);
+  document.getElementById('weightMaxLabel').textContent = maxW.toFixed(0);
+  // 流量曲线
+  let flows = pts.map(() => flow + (Math.random() - 0.5) * 0.5);
+  let minF = Math.min(...flows), maxF = Math.max(...flows);
+  let fR = maxF - minF; if (fR < 2) { minF = 0; maxF = 5; }
+  let fPts = flows.map((v, i) => {
+    let x = (i / (pts.length-1)) * 160 + 5;
+    let y = 105 - ((v - minF) / (maxF - minF)) * 90;
+    return x + ',' + y;
+  }).join(' ');
+  document.getElementById('flowCurveSvg').setAttribute('points', fPts);
+  document.getElementById('flowMaxLabel').textContent = maxF.toFixed(1);
+}
+
+function addDrop(f) {
+  if (!running) { running = true; lastDrop = Date.now(); }
+  flow = f;
+  // 如果重量接近 0，给一个初始推动力开始注水
+  if (weight < 0.5) { weight = 0.5; }
+}
+
+function removeWeight() {
+  weight = Math.max(0, weight - 50);
+  if (weight < 0.5) { running = false; time = 0; flow = 0; points = []; weight = 0; }
+  updateDisplay();
+}
+
+function resetSim() {
+  weight = 0; flow = 0; time = 0; running = false; points = [];
+  updateDisplay();
+}
+
+function tick() {
+  if (running) {
+    time += 0.1;
+    let elapsed = (Date.now() - lastDrop) / 1000;
+    if (elapsed > 0.15 && weight < 300) {
+      weight = Math.min(weight + flow * 0.08, 300);
+      if (weight > 0) points.push(weight);
+      lastDrop = Date.now();
+    }
+  }
+  updateDisplay();
+}
+
+// 键盘监听
+document.addEventListener('keydown', function(e) {
+  if (e.key === '1') { switchPage(1); e.preventDefault(); }
+});
+
+setInterval(tick, 100);
+updateDisplay();
+</script>
+
+</body>
+</html>

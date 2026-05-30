@@ -18,6 +18,7 @@
  */
 
 #include <M5Unified.h>
+#include <math.h>
 #include "config.h"
 #include "WeightSensor.h"
 #include "FlowCalculator.h"
