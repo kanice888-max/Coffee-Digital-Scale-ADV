@@ -116,6 +116,14 @@ float FlowCalculator::getFlowMax() {
     return _flowMax;
 }
 
+int FlowCalculator::getChronologicalIndex(int logicalIndex) {
+    if (_bufferCount < HISTORY_BUFFER_SIZE) {
+        return logicalIndex;  // 缓冲区未满，物理顺序 = 逻辑顺序
+    }
+    // 缓冲区已满，按时间顺序的第一个数据在 _bufferIndex 处
+    return (_bufferIndex + logicalIndex) % HISTORY_BUFFER_SIZE;
+}
+
 void FlowCalculator::reset() {
     _bufferIndex = 0;
     _bufferCount = 0;
@@ -147,25 +155,24 @@ void FlowCalculator::reset() {
 void FlowCalculator::_updateStatistics() {
     if (_bufferCount == 0) return;
 
-    // 获取刚插入的最新数据点（环形缓冲区的前一个位置）
-    int latestIdx = (_bufferIndex == 0) ? HISTORY_BUFFER_SIZE - 1 : _bufferIndex - 1;
-    float w = _weightBuffer[latestIdx];
-    float f = _flowBuffer[latestIdx];
-    unsigned long t = _timeBuffer[latestIdx];
+    // 找出环形缓冲区中按时间顺序的第一个数据索引
+    int startIndex = (_bufferCount < HISTORY_BUFFER_SIZE) ? 0 : _bufferIndex;
 
-    // 如果是第一个数据点，初始化为它
-    if (_bufferCount == 1) {
-        _weightMin = _weightMax = w;
-        _flowMin = _flowMax = f;
-        _timeMin = _timeMax = t;
-        return;
+    // 初始化极值为第一个数据点
+    _weightMin = _weightMax = _weightBuffer[startIndex];
+    _flowMin = _flowMax = _flowBuffer[startIndex];
+    _timeMin = _timeMax = _timeBuffer[startIndex];
+
+    // 遍历所有有效数据，计算真实的 min/max
+    // 每 100ms 扫描 240 个 float，在 240MHz ESP32-S3 上开销 < 0.1ms
+    for (int i = 1; i < _bufferCount; i++) {
+        int idx = (startIndex + i) % HISTORY_BUFFER_SIZE;
+
+        if (_weightBuffer[idx] < _weightMin) _weightMin = _weightBuffer[idx];
+        if (_weightBuffer[idx] > _weightMax) _weightMax = _weightBuffer[idx];
+        if (_flowBuffer[idx] < _flowMin) _flowMin = _flowBuffer[idx];
+        if (_flowBuffer[idx] > _flowMax) _flowMax = _flowBuffer[idx];
+        if (_timeBuffer[idx] < _timeMin) _timeMin = _timeBuffer[idx];
+        if (_timeBuffer[idx] > _timeMax) _timeMax = _timeBuffer[idx];
     }
-
-    // 增量更新：只与最新点比较
-    if (w < _weightMin) _weightMin = w;
-    if (w > _weightMax) _weightMax = w;
-    if (f < _flowMin) _flowMin = f;
-    if (f > _flowMax) _flowMax = f;
-    if (t < _timeMin) _timeMin = t;
-    if (t > _timeMax) _timeMax = t;
 }

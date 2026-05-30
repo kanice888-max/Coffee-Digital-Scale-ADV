@@ -182,8 +182,8 @@ void manageSession() {
 
 // ========== 健康检查 ==========
 void checkSensorHealth(float weight) {
-    // 检测传感器读数异常（从有重量突然变为 0）
-    if (weight == 0 && currentWeight > 10) {
+    // 检测传感器读数异常（从有重量突然变为接近 0）
+    if (fabs(weight) < 0.01f && currentWeight > 10) {
         sensorErrorCount++;
         if (sensorErrorCount >= MAX_SENSOR_ERRORS) {
             Serial.println(F("WARNING: Sensor reading anomaly detected"));

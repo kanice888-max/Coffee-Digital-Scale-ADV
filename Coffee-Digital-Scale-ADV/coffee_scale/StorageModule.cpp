@@ -38,7 +38,7 @@ bool StorageModule::init() {
         Serial.println(F("UNKNOWN"));
     }
 
-    Serial.printf("SD Card Size: %lluMB\n", SD.cardSize() / (1024 * 1024));
+    Serial.printf("SD Card Size: %luMB\n", (unsigned long)(SD.cardSize() / (1024 * 1024)));
 
     // 确保目录存在
     _ensureDirectory(DATA_LOG_DIR);
@@ -238,12 +238,16 @@ bool StorageModule::loadSettings(float& autoStartThreshold, float& resetThreshol
         }
     }
 
-    Serial.print(F("Settings loaded: auto_start="));
-    Serial.print(autoStartThreshold);
-    Serial.print(F(", reset="));
-    Serial.println(resetThreshold);
+    // 只有成功解析到至少一个值才返回 true
+    if (autoStartThreshold != 0 || resetThreshold != 0) {
+        Serial.print(F("Settings loaded: auto_start="));
+        Serial.print(autoStartThreshold);
+        Serial.print(F(", reset="));
+        Serial.println(resetThreshold);
+        return true;
+    }
 
-    return true;
+    return false;
 }
 
 bool StorageModule::isSDReady() {

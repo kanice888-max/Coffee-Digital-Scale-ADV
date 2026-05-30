@@ -29,7 +29,6 @@ public:
 
 private:
     Page _currentPage;
-    Page _lastPage;
     unsigned long _lastUpdateTime;
     unsigned long _lastCurveUpdateTime;
 
@@ -50,6 +49,8 @@ private:
     void _drawMiniCurve(FlowCalculator* flowCalc, int x, int y, int w, int h);
     void _drawCurve(float* data, int count, int x, int y, int w, int h,
                     float minVal, float maxVal, uint16_t color);
+    void _drawCurveChrono(FlowCalculator* flowCalc, int count, int x, int y, int w, int h,
+                          float minVal, float maxVal, uint16_t color, bool useFlow);
     void _drawGrid(int x, int y, int w, int h, int xDivisions, int yDivisions);
     void _drawAxisLabels(float minVal, float maxVal, int x, int y, int h);
     void _drawTimeAxis(unsigned long timeMin, unsigned long timeMax, int x, int y, int w);

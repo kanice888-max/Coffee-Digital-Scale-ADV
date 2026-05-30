@@ -5,7 +5,6 @@ TimerModule::TimerModule() {
     _autoStarted = false;
     _startTime = 0;
     _elapsed = 0;
-    _pausedTime = 0;
 
     _autoStartThreshold = AUTO_START_THRESHOLD;
     _resetThreshold = RESET_THRESHOLD;
@@ -33,7 +32,6 @@ void TimerModule::reset() {
     _autoStarted = false;
     _startTime = 0;
     _elapsed = 0;
-    _pausedTime = 0;
     _weightDetected = false;
     _weightLostTime = 0;
 }

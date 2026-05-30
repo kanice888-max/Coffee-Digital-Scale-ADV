@@ -62,7 +62,7 @@ void WeightSensor::tare() {
 }
 
 float WeightSensor::getWeight() {
-    if (!_initialized || !_ready) return 0;
+    if (!_initialized || !_ready) return _getLastErrorWeight();
 
     // 更新 HX711 数据
     _scale.update();

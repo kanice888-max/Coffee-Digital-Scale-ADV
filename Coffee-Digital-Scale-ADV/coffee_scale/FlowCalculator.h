@@ -28,6 +28,9 @@ public:
     float getFlowMin();
     float getFlowMax();
 
+    // 获取环形缓冲区按时间顺序的索引（用于曲线绘制）
+    int getChronologicalIndex(int logicalIndex);
+
     // 重置
     void reset();
 

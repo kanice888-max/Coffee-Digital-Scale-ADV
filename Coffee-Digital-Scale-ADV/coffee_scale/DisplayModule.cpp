@@ -2,13 +2,12 @@
 
 DisplayModule::DisplayModule() {
     _currentPage = PAGE_MAIN;
-    _lastPage = PAGE_MAIN;
     _lastUpdateTime = 0;
     _lastCurveUpdateTime = 0;
 }
 
 void DisplayModule::init() {
-    M5.Lcd.setRotation(1);  // 横屏模式：240x135
+    M5.Lcd.setRotation(1);
     M5.Lcd.fillScreen(COLOR_BG);
     M5.Lcd.setTextColor(COLOR_TEXT, COLOR_BG);
     M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
@@ -18,10 +17,8 @@ void DisplayModule::init() {
 
 void DisplayModule::setPage(Page page) {
     if (page != _currentPage) {
-        _lastPage = _currentPage;
         _currentPage = page;
 
-        // 切换页面时重绘背景
         M5.Lcd.fillScreen(COLOR_BG);
 
         switch (_currentPage) {
@@ -182,8 +179,7 @@ void DisplayModule::_drawWeightCurvePage(FlowCalculator* flowCalc) {
     // 绘制网格
     _drawGrid(curveX, curveY, curveW, curveH, 6, 4);
 
-    // 绘制重量曲线
-    float* weights = flowCalc->getWeightHistory();
+    // 绘制重量曲线（按时间顺序）
     float minW = flowCalc->getWeightMin();
     float maxW = flowCalc->getWeightMax();
 
@@ -193,7 +189,8 @@ void DisplayModule::_drawWeightCurvePage(FlowCalculator* flowCalc) {
     minW -= range * 0.1;
     maxW += range * 0.1;
 
-    _drawCurve(weights, count, curveX, curveY, curveW, curveH, minW, maxW, COLOR_ACCENT);
+    _drawCurveChrono(flowCalc, count, curveX, curveY, curveW, curveH,
+                     minW, maxW, COLOR_ACCENT, false);
 
     // 绘制 Y 轴标签
     _drawAxisLabels(minW, maxW, 0, curveY, curveH);
@@ -218,8 +215,7 @@ void DisplayModule::_drawFlowCurvePage(FlowCalculator* flowCalc) {
     // 绘制网格
     _drawGrid(curveX, curveY, curveW, curveH, 6, 4);
 
-    // 绘制流量曲线
-    float* flows = flowCalc->getFlowHistory();
+    // 绘制流量曲线（按时间顺序）
     float minF = flowCalc->getFlowMin();
     float maxF = flowCalc->getFlowMax();
 
@@ -232,7 +228,8 @@ void DisplayModule::_drawFlowCurvePage(FlowCalculator* flowCalc) {
     // 确保包含 0
     if (minF > 0) minF = 0;
 
-    _drawCurve(flows, count, curveX, curveY, curveW, curveH, minF, maxF, COLOR_ACCENT);
+    _drawCurveChrono(flowCalc, count, curveX, curveY, curveW, curveH,
+                     minF, maxF, COLOR_ACCENT, true);
 
     // 绘制 Y 轴标签
     _drawAxisLabels(minF, maxF, 0, curveY, curveH);
@@ -310,8 +307,7 @@ void DisplayModule::_drawMiniCurve(FlowCalculator* flowCalc, int x, int y, int w
     // 清除曲线区域
     _clearArea(x, y, w, h);
 
-    // 绘制重量迷你曲线
-    float* weights = flowCalc->getWeightHistory();
+    // 绘制重量迷你曲线（按时间顺序）
     float minW = flowCalc->getWeightMin();
     float maxW = flowCalc->getWeightMax();
 
@@ -320,7 +316,7 @@ void DisplayModule::_drawMiniCurve(FlowCalculator* flowCalc, int x, int y, int w
     minW -= range * 0.1;
     maxW += range * 0.1;
 
-    _drawCurve(weights, count, x, y, w, h, minW, maxW, COLOR_ACCENT);
+    _drawCurveChrono(flowCalc, count, x, y, w, h, minW, maxW, COLOR_ACCENT, false);
 }
 
 void DisplayModule::_drawCurve(float* data, int count, int x, int y, int w, int h,
@@ -340,6 +336,34 @@ void DisplayModule::_drawCurve(float* data, int count, int x, int y, int w, int 
         int y2 = y + h - (int)((data[i + 1] - minVal) * yScale);
 
         // 限制在区域内
+        y1 = constrain(y1, y, y + h);
+        y2 = constrain(y2, y, y + h);
+
+        M5.Lcd.drawLine(x1, y1, x2, y2, color);
+    }
+}
+
+void DisplayModule::_drawCurveChrono(FlowCalculator* flowCalc, int count, int x, int y, int w, int h,
+                                      float minVal, float maxVal, uint16_t color, bool useFlow) {
+    if (count < 2) return;
+
+    float range = maxVal - minVal;
+    if (range < 0.01f) range = 1.0f;
+    float yScale = h / range;
+
+    // 获取数据缓冲区（重量或流量）
+    float* buf = useFlow ? flowCalc->getFlowHistory() : flowCalc->getWeightHistory();
+
+    for (int i = 0; i < count - 1; i++) {
+        // 使用按时间顺序的索引访问环形缓冲区
+        int idx1 = flowCalc->getChronologicalIndex(i);
+        int idx2 = flowCalc->getChronologicalIndex(i + 1);
+
+        int x1 = x + (i * w) / count;
+        int x2 = x + ((i + 1) * w) / count;
+        int y1 = y + h - (int)((buf[idx1] - minVal) * yScale);
+        int y2 = y + h - (int)((buf[idx2] - minVal) * yScale);
+
         y1 = constrain(y1, y, y + h);
         y2 = constrain(y2, y, y + h);
 

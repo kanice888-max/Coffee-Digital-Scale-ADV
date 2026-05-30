@@ -32,7 +32,6 @@ private:
     bool _autoStarted;
     unsigned long _startTime;
     unsigned long _elapsed;
-    unsigned long _pausedTime;
 
     // 阈值
     float _autoStartThreshold;
