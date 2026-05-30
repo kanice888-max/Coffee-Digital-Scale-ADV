@@ -62,6 +62,25 @@ void WeightSensor::tare() {
 }
 
 float WeightSensor::getWeight() {
+#if DEMO_MODE
+    if (!_initialized) {
+        // ========== 模拟注水曲线（无需 HX711 即可测试 UI） ==========
+        unsigned long t = millis() / 1000;  // 运行秒数
+
+        if (t < 5) {
+            return 0.0f;                       // 0-5s: 空杯
+        } else if (t < 20) {
+            return (t - 5) * 250.0f / 15.0f;   // 5-20s: 0→250g 注水
+        } else if (t < 25) {
+            return 250.0f;                      // 20-25s: 闷蒸
+        } else if (t < 35) {
+            return 250.0f - (t - 25) * 30.0f;   // 25-35s: 下降 250→-50
+        } else {
+            return 200.0f;                      // 35s+: 稳定
+        }
+    }
+#endif
+
     if (!_initialized || !_ready) return _getLastErrorWeight();
 
     // 更新 HX711 数据

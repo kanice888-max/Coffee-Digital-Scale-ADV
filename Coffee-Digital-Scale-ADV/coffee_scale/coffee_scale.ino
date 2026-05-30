@@ -15,7 +15,7 @@
  * - MicroSD 卡
  */
 
-#include <M5Unified.h>
+#include <M5Cardputer.h>
 #include <math.h>
 #include "config.h"
 #include "WeightSensor.h"
@@ -72,9 +72,9 @@ void handleKeyboardInput(DisplayModule* disp);
 // ========== 初始化 ==========
 void setup() {
     auto cfg = M5.config();
-    M5.begin(cfg);
-    // 初始化扬声器
-    M5.Speaker.begin();
+    M5Cardputer.begin(cfg);
+    // 初始化扬声器（M5Cardputer.Speaker 是 M5.Speaker 的别名）
+    M5Cardputer.Speaker.begin();
 
     Serial.begin(115200);
     Serial.println(F("\n=== Coffee Digital Scale ==="));
@@ -100,9 +100,13 @@ void setup() {
     // 初始化传感器模块
     displayModule.showMessage(F("Init Sensor..."), 500);
     if (!weightSensor.init()) {
-        displayModule.showMessage(F("Sensor Error!"), 0);
+        displayModule.showMessage(F("Sensor Error!"), 2000);
+#if !DEMO_MODE
         Serial.println(F("FATAL: HX711 initialization failed"));
         haltSystem();
+#else
+        Serial.println(F("DEMO: HX711 not present, running in simulation mode"));
+#endif
     }
 
     // 自动去皮
@@ -130,7 +134,7 @@ void loop() {
     if (!isRunning) return;
 
     unsigned long now = millis();
-    M5.update();
+    M5Cardputer.update();
 
     // 处理 Cardputer 键盘输入
     handleKeyboardInput(&displayModule);
@@ -212,105 +216,114 @@ void manageSession() {
 
 // ========== 健康检查 ==========
 void checkSensorHealth(float weight) {
-    if (fabs(weight) < 0.01f && currentWeight > 10) {
+    // 检测异常：读数超出合理范围
+    if (weight < -500 || weight > 50000) {
         sensorErrorCount++;
-        if (sensorErrorCount >= MAX_SENSOR_ERRORS) {
-            Serial.println(F("WARNING: Sensor reading anomaly detected"));
-            sensorErrorCount = 0;
-        }
+    } else if (timerModule.isRunning() && fabs(weight) < 0.01f && currentWeight > 5) {
+        // 计时运行中重量突然归零，可能传感器异常
+        sensorErrorCount++;
     } else {
+        sensorErrorCount = 0;
+    }
+
+    if (sensorErrorCount >= MAX_SENSOR_ERRORS) {
+        Serial.println(F("WARNING: Sensor reading anomaly detected"));
         sensorErrorCount = 0;
     }
 }
 
 // ========== 目标水量声音提示 ==========
 void playTargetReachedSound() {
-    M5.Speaker.tone(880, 200);
+    M5Cardputer.Speaker.tone(880, 200);
     delay(250);
-    M5.Speaker.tone(1320, 200);
+    M5Cardputer.Speaker.tone(1320, 200);
     delay(250);
-    M5.Speaker.tone(1760, 400);
+    M5Cardputer.Speaker.tone(1760, 400);
     Serial.println(F("Target water reached!"));
 }
 
 // ========== Cardputer 键盘输入处理 ==========
 void handleKeyboardInput(DisplayModule* disp) {
-    if (M5.Keyboard.isChange()) {
-        if (M5.Keyboard.isPressed()) {
-            auto keys = M5.Keyboard.keys();
-            if (!keys.isEmpty()) {
-                char key = keys.front();
+    if (!M5Cardputer.Keyboard.isChange()) return;
+    if (!M5Cardputer.Keyboard.isPressed()) return;
 
-                // 设置页键盘输入
-                if (disp->getCurrentPage() == DisplayModule::PAGE_SETTINGS) {
-                    if (!inputMode) {
-                        // 不在输入模式 — 按键选择功能
-                        if (key == '1') {
-                            disp->setPage(DisplayModule::PAGE_MAIN);
-                            return;
-                        }
-                        if (key == 'r' || key == 'R') {
-                            inputMode = true;
-                            inputTarget = 'r';
-                            inputBuffer = "";
-                            Serial.println(F("Enter ratio: "));
-                            return;
-                        }
-                        if (key == 'd' || key == 'D') {
-                            inputMode = true;
-                            inputTarget = 'd';
-                            inputBuffer = "";
-                            Serial.println(F("Enter dose (g): "));
-                            return;
-                        }
-                    } else {
-                        // 输入模式 — 接收数字
-                        if (key >= '0' && key <= '9') {
-                            inputBuffer += key;
-                            return;
-                        }
-                        if (key == '=' || key == KEY_RETURN || key == KEY_ENTER) {
-                            float val = inputBuffer.toFloat();
-                            if (val > 0) {
-                                if (inputTarget == 'r') {
-                                    waterRatio = val;
-                                } else if (inputTarget == 'd') {
-                                    coffeeDose = val;
-                                }
-                                targetWater = waterRatio * coffeeDose;
-                                targetReached = false;
-                                Serial.print(F("Target water: "));
-                                Serial.println(targetWater);
-                                saveSettings();
-                            }
-                            inputMode = false;
-                            inputBuffer = "";
-                            return;
-                        }
-                        if (key == KEY_BACKSPACE || key == 0x08 || key == 0x7F) {
-                            if (inputBuffer.length() > 0) {
-                                inputBuffer.remove(inputBuffer.length() - 1);
-                            }
-                            return;
-                        }
-                        return;
-                    }
+    auto& state = M5Cardputer.Keyboard.keysState();
+    DisplayModule::Page page = disp->getCurrentPage();
+
+    // === 设置页 ===
+    if (page == DisplayModule::PAGE_SETTINGS) {
+        if (!inputMode) {
+            // 选择功能模式
+            for (auto ch : state.word) {
+                if (ch == '1') {
+                    disp->setPage(DisplayModule::PAGE_MAIN);
+                    return;
                 }
-
-                // 主界面键盘功能
-                if (disp->getCurrentPage() == DisplayModule::PAGE_MAIN) {
-                    if (key == '1') {
-                        disp->setPage(DisplayModule::PAGE_SETTINGS);
-                        return;
-                    }
+                if (ch == 'r' || ch == 'R') {
+                    inputMode = true;
+                    inputTarget = 'r';
+                    inputBuffer = "";
+                    Serial.println(F("Enter ratio: "));
+                    return;
                 }
-
-                // 重量曲线页面
-                if (key == '1') {
-                    Page nextPage = (Page)((disp->getCurrentPage() + 1) % 4);
-                    disp->setPage(nextPage);
+                if (ch == 'd' || ch == 'D') {
+                    inputMode = true;
+                    inputTarget = 'd';
+                    inputBuffer = "";
+                    Serial.println(F("Enter dose (g): "));
+                    return;
                 }
             }
+        } else {
+            // 数字输入模式
+            for (auto ch : state.word) {
+                if (ch >= '0' && ch <= '9') {
+                    inputBuffer += ch;
+                }
+            }
+            if (state.enter) {
+                float val = inputBuffer.toFloat();
+                if (val > 0) {
+                    if (inputTarget == 'r') {
+                        waterRatio = val;
+                    } else if (inputTarget == 'd') {
+                        coffeeDose = val;
+                    }
+                    targetWater = waterRatio * coffeeDose;
+                    targetReached = false;
+                    Serial.print(F("Target water: "));
+                    Serial.println(targetWater);
+                    saveSettings();
+                }
+                inputMode = false;
+                inputBuffer = "";
+                return;
+            }
+            if (state.del && inputBuffer.length() > 0) {
+                inputBuffer.remove(inputBuffer.length() - 1);
+                return;
+            }
+        }
+        return;
+    }
+
+    // === 主界面 ===
+    if (page == DisplayModule::PAGE_MAIN) {
+        for (auto ch : state.word) {
+            if (ch == '1') {
+                disp->setPage(DisplayModule::PAGE_SETTINGS);
+                return;
+            }
+        }
+        return;
+    }
+
+    // === 其他页面（曲线页）：按 '1' 翻页 ===
+    for (auto ch : state.word) {
+        if (ch == '1') {
+            DisplayModule::Page nextPage = static_cast<DisplayModule::Page>((page + 1) % 4);
+            disp->setPage(nextPage);
+            return;
         }
     }
 }

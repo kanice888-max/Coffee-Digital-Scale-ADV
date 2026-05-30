@@ -29,18 +29,24 @@
 
 // ========== UI 配色 (RGB565) ==========
 // 方案 B · 暖咖氛围（深褐 + 暖金 + 琥珀）
-#define COLOR_BG            0x1082  // 深褐背景 #24140D
-#define COLOR_BG_DARK       0x0841  // 更深褐 #1A0D08
-#define COLOR_TEXT          0xF7DE  // 暖白文字 #F5E6D0
-#define COLOR_TEXT_DIM      0x528A  // 棕灰文字 #8A7A60
-#define COLOR_ACCENT        0xAD55  // 暖金色 #D4A574
-#define COLOR_DIVIDER       0x2116  // 深褐分隔 #3D2A1A
-#define COLOR_GRID          0x1082  // 网格线颜色
-#define COLOR_CURVE_WEIGHT  0xAD55  // 重量曲线暖金
-#define COLOR_CURVE_FLOW    0xFC82  // 流量曲线橙琥珀 #FF8C42
-#define COLOR_STATUS_ON     0x9A52  // 运行状态暖色 #C4956A
-#define COLOR_STATUS_OFF    0x3908  // 停止状态暗褐 #3A2A1A
-#define COLOR_TARGET        0x5CCB  // 目标水量进度颜色（青绿）
+// RGB565 转换公式: R5=R*31/255, G6=G*63/255, B5=B*31/255, val=(R5<<11)|(G6<<5)|B5
+#define COLOR_BG            0x20A2  // 深褐背景 #24140D
+#define COLOR_BG_DARK       0x1861  // 更深褐 #1A0D08
+#define COLOR_TEXT          0xF739  // 暖白文字 #F5E6D0
+#define COLOR_TEXT_DIM      0x8BCC  // 棕灰文字 #8A7A60
+#define COLOR_ACCENT        0xD52E  // 暖金色 #D4A574
+#define COLOR_DIVIDER       0x3943  // 深褐分隔 #3D2A1A
+#define COLOR_GRID          0x20A2  // 网格线颜色（同 BG）
+#define COLOR_CURVE_WEIGHT  0xD52E  // 重量曲线暖金
+#define COLOR_CURVE_FLOW    0xFC68  // 流量曲线橙琥珀 #FF8C42
+#define COLOR_STATUS_ON     0xC4AD  // 运行状态暖色 #C4956A
+#define COLOR_STATUS_OFF    0x3943  // 停止状态暗褐 #3A2A1A
+#define COLOR_SUCCESS       0x25F0  // 目标达成青绿色 #1FC080
+#define COLOR_TARGET        0x25F0  // 目标水量进度颜色（同 SUCCESS）
+
+// ========== 演示模式 ==========
+#define DEMO_MODE           1       // 1=无传感器模拟演示, 0=正式硬件模式
+// 注意：正式使用 HX711 时请将 DEMO_MODE 改为 0
 
 // ========== UI 布局 ==========
 #define SCREEN_WIDTH        240
