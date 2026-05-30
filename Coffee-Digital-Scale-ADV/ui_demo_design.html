@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>方案 B · 暖咖氛围 · Georgia 衬线</title>
+<title>方案 B · 暖咖 · 流量时间放大</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0d0d14;font-family:Georgia,serif;color:#ccc;padding:32px;display:flex;flex-direction:column;align-items:center;gap:24px}
@@ -24,13 +24,13 @@ h1 strong{color:#eee;font-weight:500}
 </style>
 </head>
 <body>
-<h1>方案 B · <strong>暖咖氛围</strong> · Georgia Serif</h1>
-<p class="sub">240×135 · 标题栏 + 数据文字均使用衬线字体</p>
+<h1>方案 B · <strong>暖咖氛围</strong> · 流量时间放大</h1>
+<p class="sub">240×135 · flow/time 18pt · BREWING 12pt · 曲线 2px 流畅线条</p>
 
 <div class="card">
   <div class="card-header">
     <div class="name">☕ Pour Over Scale</div>
-    <div class="tags"><span>Georgia Serif</span><span>暖金 #D4A574</span></div>
+    <div class="tags"><span>Georgia Serif</span><span>FreeSerif18pt</span></div>
   </div>
   <div class="screen-box" id="screenB"></div>
   <div class="pages" id="pageBtns">
@@ -57,16 +57,19 @@ function main() {
     <circle cx="234" cy="9" r="2.5" fill="#5A4A3A"/>
     <line x1="0" y1="18" x2="240" y2="18" stroke="#D4A574" stroke-width="2" opacity="0.35"/>
     <line x1="0" y1="19" x2="240" y2="19" stroke="#1A0D08" stroke-width="1"/>
-    <text x="120" y="52" text-anchor="middle" fill="#F5E6D0" font-size="32" font-weight="700" ${FF}>${w.toFixed(1)}</text>
+    <text x="120" y="52" text-anchor="middle" fill="#F5E6D0" font-size="30" font-weight="700" ${FF}>${w.toFixed(1)}</text>
     <line x1="0" y1="63" x2="240" y2="63" stroke="#D4A574" stroke-width="2" opacity="0.35"/>
     <line x1="0" y1="64" x2="240" y2="64" stroke="#1A0D08" stroke-width="1"/>
-    <text x="12" y="83" fill="#D4A574" font-size="11" font-weight="600" ${FF}>flow ${f.toFixed(1)} g/s</text>
-    <text x="228" y="83" text-anchor="end" fill="#D4A574" font-size="11" font-weight="600" ${FF}>${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
-    <line x1="0" y1="88" x2="240" y2="88" stroke="#3A2A1A" stroke-width="1"/>
-    <circle cx="12" cy="95" r="3" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
-    <text x="20" y="98" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="8" font-weight="600" letter-spacing="0.5" ${FF}>${D.running?'BREWING':'STANDBY'}</text>
-    <polyline points="0,128 15,124 30,118 50,112 70,106 90,100 110,98 130,100 150,104 170,110 190,114 210,112 240,108"
-      fill="none" stroke="#D4A574" stroke-width="1.5" opacity="0.4" stroke-linecap="round"/>
+    <text x="12" y="79" fill="#8A7A60" font-size="8" ${FF}>flow</text>
+    <text x="12" y="96" fill="#D4A574" font-size="16" font-weight="700" ${FF}>${f.toFixed(1)}</text>
+    <text x="60" y="96" fill="#D4A574" font-size="12" font-weight="600" ${FF}>g/s</text>
+    <text x="228" y="79" text-anchor="end" fill="#8A7A60" font-size="8" ${FF}>time</text>
+    <text x="228" y="96" text-anchor="end" fill="#D4A574" font-size="16" font-weight="700" ${FF}>${String(D.m).padStart(2,'0')}:${String(D.s).padStart(2,'0')}</text>
+    <line x1="0" y1="104" x2="240" y2="104" stroke="#3A2A1A" stroke-width="1"/>
+    <circle cx="12" cy="111" r="4" fill="${D.running?'#C4956A':'#3A2A1A'}"/>
+    <text x="22" y="115" fill="${D.running?'#C4956A':'#5A4A3A'}" font-size="11" font-weight="600" letter-spacing="1" ${FF}>${D.running?'BREWING':'STANDBY'}</text>
+    <polyline points="0,135 8,130 18,124 30,118 45,112 62,106 80,102 100,100 118,101 136,103 154,107 170,111 186,114 200,115 216,113 230,110 240,108"
+      fill="none" stroke="#D4A574" stroke-width="2" opacity="0.5" stroke-linecap="round" stroke-linejoin="round"/>
     <line x1="0" y1="135" x2="240" y2="135" stroke="#D4A574" stroke-width="0.5" opacity="0.15"/>
   </svg>`;
 }
