@@ -25,7 +25,7 @@ public:
     void handleInput();
 
     // 显示消息
-    void showMessage(const char* message, int durationMs = 1000);
+    void showMessage(const String& message, int durationMs = 1000);
 
 private:
     Page _currentPage;
@@ -41,16 +41,16 @@ private:
 
     // 背景绘制（只在页面切换时调用）
     void _drawMainBackground();
-    void _drawCurveBackground(const char* title, const char* yLabel);
+    void _drawCurveBackground(const __FlashStringHelper* title, const __FlashStringHelper* yLabel);
 
     // UI 组件
-    void _drawTitle(const char* title);
+    void _drawTitle(const __FlashStringHelper* title);
     void _drawStatusBar(float flowRate, TimerModule* timer);
     void _drawMiniCurve(FlowCalculator* flowCalc, int x, int y, int w, int h);
     void _drawCurve(float* data, int count, int x, int y, int w, int h,
                     float minVal, float maxVal, uint16_t color);
     void _drawGrid(int x, int y, int w, int h, int xDivisions, int yDivisions);
-    void _drawAxisLabels(float minVal, float maxVal, int x, int y, int h, const char* unit);
+    void _drawAxisLabels(float minVal, float maxVal, int x, int y, int h);
     void _drawTimeAxis(unsigned long timeMin, unsigned long timeMax, int x, int y, int w);
 
     // 页面指示器

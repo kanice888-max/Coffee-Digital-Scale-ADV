@@ -29,10 +29,10 @@ void DisplayModule::setPage(Page page) {
                 _drawMainBackground();
                 break;
             case PAGE_WEIGHT_CURVE:
-                _drawCurveBackground("Weight", "g");
+                _drawCurveBackground(F("Weight"), F("g"));
                 break;
             case PAGE_FLOW_CURVE:
-                _drawCurveBackground("Flow", "g/s");
+                _drawCurveBackground(F("Flow"), F("g/s"));
                 break;
             case PAGE_SETTINGS:
                 _drawSettingsPage();
@@ -83,8 +83,6 @@ void DisplayModule::update(float weight, float flowRate, TimerModule* timer, Flo
 }
 
 void DisplayModule::handleInput() {
-    M5.update();
-
     // 按钮 A 切换页面
     if (M5.BtnA.wasPressed()) {
         Page nextPage = (Page)((_currentPage + 1) % 4);
@@ -92,7 +90,7 @@ void DisplayModule::handleInput() {
     }
 }
 
-void DisplayModule::showMessage(const char* message, int durationMs) {
+void DisplayModule::showMessage(const String& message, int durationMs) {
     // 保存当前状态
     Page savedPage = _currentPage;
 
@@ -103,7 +101,9 @@ void DisplayModule::showMessage(const char* message, int durationMs) {
     M5.Lcd.setTextDatum(MC_DATUM);
     M5.Lcd.drawString(message, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
 
-    delay(durationMs);
+    if (durationMs > 0) {
+        delay(durationMs);
+    }
 
     // 恢复
     M5.Lcd.fillScreen(COLOR_BG);
@@ -112,10 +112,10 @@ void DisplayModule::showMessage(const char* message, int durationMs) {
             _drawMainBackground();
             break;
         case PAGE_WEIGHT_CURVE:
-            _drawCurveBackground("Weight", "g");
+            _drawCurveBackground(F("Weight"), F("g"));
             break;
         case PAGE_FLOW_CURVE:
-            _drawCurveBackground("Flow", "g/s");
+            _drawCurveBackground(F("Flow"), F("g/s"));
             break;
         case PAGE_SETTINGS:
             _drawSettingsPage();
@@ -133,8 +133,10 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
     M5.Lcd.setTextSize(WEIGHT_FONT_SIZE);
     M5.Lcd.setTextDatum(MC_DATUM);
 
-    char weightStr[10];
-    sprintf(weightStr, "%.1f g", weight);
+    // 使用 F() 宏减少内存使用
+    char weightStr[12];
+    dtostrf(weight, 5, 1, weightStr);
+    strcat(weightStr, " g");
     M5.Lcd.drawString(weightStr, SCREEN_WIDTH / 2, TITLE_HEIGHT + 25);
 
     // 更新状态栏
@@ -170,7 +172,7 @@ void DisplayModule::_drawWeightCurvePage(FlowCalculator* flowCalc) {
                minW, maxW, COLOR_ACCENT);
 
     // 绘制 Y 轴标签
-    _drawAxisLabels(minW, maxW, 0, TITLE_HEIGHT + 5, SCREEN_HEIGHT - TITLE_HEIGHT - 25, "");
+    _drawAxisLabels(minW, maxW, 0, TITLE_HEIGHT + 5, SCREEN_HEIGHT - TITLE_HEIGHT - 25);
 
     // 绘制时间轴
     _drawTimeAxis(flowCalc->getTimeMin(), flowCalc->getTimeMax(),
@@ -206,7 +208,7 @@ void DisplayModule::_drawFlowCurvePage(FlowCalculator* flowCalc) {
                minF, maxF, COLOR_ACCENT);
 
     // 绘制 Y 轴标签
-    _drawAxisLabels(minF, maxF, 0, TITLE_HEIGHT + 5, SCREEN_HEIGHT - TITLE_HEIGHT - 25, "");
+    _drawAxisLabels(minF, maxF, 0, TITLE_HEIGHT + 5, SCREEN_HEIGHT - TITLE_HEIGHT - 25);
 
     // 绘制时间轴
     _drawTimeAxis(flowCalc->getTimeMin(), flowCalc->getTimeMax(),
@@ -218,13 +220,13 @@ void DisplayModule::_drawSettingsPage() {
     M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
     M5.Lcd.setTextDatum(TL_DATUM);
 
-    M5.Lcd.drawString("Settings", 10, TITLE_HEIGHT + 10);
-    M5.Lcd.drawString("Press BtnA to return", 10, TITLE_HEIGHT + 40);
+    M5.Lcd.drawString(F("Settings"), 10, TITLE_HEIGHT + 10);
+    M5.Lcd.drawString(F("Press BtnA to return"), 10, TITLE_HEIGHT + 40);
 }
 
 void DisplayModule::_drawMainBackground() {
     // 标题栏
-    _drawTitle("Pour Over Scale");
+    _drawTitle(F("Pour Over Scale"));
 
     // 分隔线
     M5.Lcd.drawLine(0, TITLE_HEIGHT, SCREEN_WIDTH, TITLE_HEIGHT, COLOR_TEXT_DIM);
@@ -232,7 +234,7 @@ void DisplayModule::_drawMainBackground() {
     M5.Lcd.drawLine(0, 93, SCREEN_WIDTH, 93, COLOR_TEXT_DIM);
 }
 
-void DisplayModule::_drawCurveBackground(const char* title, const char* yLabel) {
+void DisplayModule::_drawCurveBackground(const __FlashStringHelper* title, const __FlashStringHelper* yLabel) {
     // 标题栏
     _drawTitle(title);
 
@@ -243,7 +245,7 @@ void DisplayModule::_drawCurveBackground(const char* title, const char* yLabel) 
     M5.Lcd.drawString(yLabel, 5, TITLE_HEIGHT + 5);
 }
 
-void DisplayModule::_drawTitle(const char* title) {
+void DisplayModule::_drawTitle(const __FlashStringHelper* title) {
     M5.Lcd.setTextColor(COLOR_ACCENT, COLOR_BG);
     M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
     M5.Lcd.setTextDatum(TC_DATUM);
@@ -258,14 +260,14 @@ void DisplayModule::_drawStatusBar(float flowRate, TimerModule* timer) {
     M5.Lcd.setTextSize(NORMAL_FONT_SIZE);
     M5.Lcd.setTextDatum(TL_DATUM);
 
-    // 流量
-    char flowStr[15];
-    sprintf(flowStr, "Flow:%.1fg/s", flowRate);
+    // 流量 - 使用 F() 宏
+    char flowStr[16];
+    snprintf(flowStr, sizeof(flowStr), "Flow:%.1fg/s", flowRate);
     M5.Lcd.drawString(flowStr, 5, 74);
 
-    // 计时
+    // 计时 - 使用 F() 宏
     M5.Lcd.setTextDatum(TR_DATUM);
-    String timeStr = "Time:" + timer->getFormattedTime();
+    String timeStr = F("Time:") + timer->getFormattedTime();
     M5.Lcd.drawString(timeStr, SCREEN_WIDTH - 5, 74);
 }
 
@@ -296,11 +298,14 @@ void DisplayModule::_drawCurve(float* data, int count, int x, int y, int w, int 
     float range = maxVal - minVal;
     if (range < 0.01f) range = 1.0f;  // 防止除零
 
+    // 预计算缩放因子，避免重复除法
+    float yScale = h / range;
+
     for (int i = 0; i < count - 1; i++) {
         int x1 = x + (i * w) / count;
         int x2 = x + ((i + 1) * w) / count;
-        int y1 = y + h - (int)((data[i] - minVal) * h / range);
-        int y2 = y + h - (int)((data[i + 1] - minVal) * h / range);
+        int y1 = y + h - (int)((data[i] - minVal) * yScale);
+        int y2 = y + h - (int)((data[i + 1] - minVal) * yScale);
 
         // 限制在区域内
         y1 = constrain(y1, y, y + h);
@@ -313,7 +318,7 @@ void DisplayModule::_drawCurve(float* data, int count, int x, int y, int w, int 
 void DisplayModule::_drawGrid(int x, int y, int w, int h, int xDivisions, int yDivisions) {
     M5.Lcd.drawRect(x, y, w, h, COLOR_TEXT_DIM);
 
-    // 垂直网格线
+    // 垂直网格线（虚线）
     for (int i = 1; i < xDivisions; i++) {
         int lineX = x + (i * w) / xDivisions;
         for (int lineY = y; lineY < y + h; lineY += 4) {
@@ -321,7 +326,7 @@ void DisplayModule::_drawGrid(int x, int y, int w, int h, int xDivisions, int yD
         }
     }
 
-    // 水平网格线
+    // 水平网格线（虚线）
     for (int i = 1; i < yDivisions; i++) {
         int lineY = y + (i * h) / yDivisions;
         for (int lineX = x; lineX < x + w; lineX += 4) {
@@ -330,18 +335,18 @@ void DisplayModule::_drawGrid(int x, int y, int w, int h, int xDivisions, int yD
     }
 }
 
-void DisplayModule::_drawAxisLabels(float minVal, float maxVal, int x, int y, int h, const char* unit) {
+void DisplayModule::_drawAxisLabels(float minVal, float maxVal, int x, int y, int h) {
     M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
     M5.Lcd.setTextSize(1);
     M5.Lcd.setTextDatum(TR_DATUM);
 
     // 最大值
-    char label[10];
-    sprintf(label, "%.0f", maxVal);
+    char label[8];
+    snprintf(label, sizeof(label), "%.0f", maxVal);
     M5.Lcd.drawString(label, x + 28, y);
 
     // 最小值
-    sprintf(label, "%.0f", minVal);
+    snprintf(label, sizeof(label), "%.0f", minVal);
     M5.Lcd.drawString(label, x + 28, y + h - 8);
 }
 
@@ -354,14 +359,14 @@ void DisplayModule::_drawTimeAxis(unsigned long timeMin, unsigned long timeMax, 
     float startSec = timeMin / 1000.0f;
     float endSec = timeMax / 1000.0f;
 
-    char label[10];
+    char label[8];
 
     // 起始时间
-    sprintf(label, "%.0fs", startSec);
+    snprintf(label, sizeof(label), "%.0fs", startSec);
     M5.Lcd.drawString(label, x, y);
 
     // 结束时间
-    sprintf(label, "%.0fs", endSec);
+    snprintf(label, sizeof(label), "%.0fs", endSec);
     M5.Lcd.drawString(label, x + w, y);
 }
 

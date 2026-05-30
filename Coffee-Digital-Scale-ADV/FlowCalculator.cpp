@@ -32,9 +32,9 @@ FlowCalculator::FlowCalculator() {
 void FlowCalculator::update(float weight, unsigned long timestamp) {
     // 计算瞬时流量
     if (_lastTimestamp > 0) {
-        float dt = (timestamp - _lastTimestamp) / 1000.0f;  // 转换为秒
-        if (dt > 0.001f) {  // 避免除以极小值
-            float instantFlow = (weight - _lastWeight) / dt;
+        unsigned long dt = timestamp - _lastTimestamp;
+        if (dt > 0 && dt < 10000) {  // 避免除以极小值和异常大的时间差
+            float instantFlow = (weight - _lastWeight) * 1000.0f / dt;  // g/s
 
             // 滑动窗口平均
             _flowWindowSum -= _flowWindow[_flowWindowIndex];
@@ -49,7 +49,7 @@ void FlowCalculator::update(float weight, unsigned long timestamp) {
             if (_flowWindowFull) {
                 _currentFlowRate = _flowWindowSum / FLOW_WINDOW_SIZE;
             } else {
-                _currentFlowRate = _flowWindowSum / _flowWindowIndex;
+                _currentFlowRate = _flowWindowSum / (_flowWindowIndex > 0 ? _flowWindowIndex : 1);
             }
         }
     }
@@ -66,8 +66,10 @@ void FlowCalculator::update(float weight, unsigned long timestamp) {
         _bufferCount++;
     }
 
-    // 更新统计值
-    _updateStatistics();
+    // 更新统计值（只在有数据时更新）
+    if (_bufferCount > 0) {
+        _updateStatistics();
+    }
 }
 
 float FlowCalculator::getFlowRate() {
@@ -155,7 +157,8 @@ void FlowCalculator::_updateStatistics() {
     _timeMin = _timeBuffer[startIndex];
     _timeMax = _timeBuffer[startIndex];
 
-    for (int i = 0; i < _bufferCount; i++) {
+    // 遍历所有有效数据
+    for (int i = 1; i < _bufferCount; i++) {
         int idx = (startIndex + i) % HISTORY_BUFFER_SIZE;
 
         if (_weightBuffer[idx] < _weightMin) _weightMin = _weightBuffer[idx];

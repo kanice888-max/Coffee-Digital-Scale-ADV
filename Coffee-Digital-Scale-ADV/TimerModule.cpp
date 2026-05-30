@@ -41,13 +41,13 @@ void TimerModule::reset() {
 void TimerModule::checkAutoStart(float weight) {
     unsigned long now = millis();
 
-    // 自动启动：重量超过阈值
+    // 自动启动：重量超过阈值且计时器未运行
     if (!_running && !_autoStarted && weight > _autoStartThreshold) {
         start();
         _autoStarted = true;
         _weightDetected = true;
         _weightLostTime = 0;
-        Serial.println("Timer auto-started");
+        Serial.println(F("Timer auto-started"));
     }
 
     // 自动重置：重量归零
@@ -60,7 +60,7 @@ void TimerModule::checkAutoStart(float weight) {
             } else if (_weightLostTime > 0 && (now - _weightLostTime) > RESET_DELAY_MS) {
                 // 重量持续低于阈值超过延迟时间，重置计时器
                 reset();
-                Serial.println("Timer auto-reset");
+                Serial.println(F("Timer auto-reset"));
             }
         } else {
             // 重量恢复，重置丢失计时
@@ -88,16 +88,22 @@ String TimerModule::getFormattedTime() {
     int tenths = (elapsed / 100) % 10;
 
     char buffer[10];
-    sprintf(buffer, "%02d:%02d.%d", minutes, seconds, tenths);
+    snprintf(buffer, sizeof(buffer), "%02d:%02d.%d", minutes, seconds, tenths);
     return String(buffer);
 }
 
 void TimerModule::setAutoStartThreshold(float threshold) {
-    _autoStartThreshold = threshold;
+    // 验证阈值范围
+    if (threshold >= 0 && threshold < 100) {
+        _autoStartThreshold = threshold;
+    }
 }
 
 void TimerModule::setResetThreshold(float threshold) {
-    _resetThreshold = threshold;
+    // 验证阈值范围
+    if (threshold >= 0 && threshold < 100) {
+        _resetThreshold = threshold;
+    }
 }
 
 float TimerModule::getAutoStartThreshold() {
