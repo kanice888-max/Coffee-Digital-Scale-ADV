@@ -46,6 +46,7 @@ private:
     // UI 组件
     void _drawTitle(const __FlashStringHelper* title);
     void _drawStatusBar(float flowRate, TimerModule* timer);
+    void _drawStatusIndicators(TimerModule* timer);
     void _drawMiniCurve(FlowCalculator* flowCalc, int x, int y, int w, int h);
     void _drawCurve(float* data, int count, int x, int y, int w, int h,
                     float minVal, float maxVal, uint16_t color);

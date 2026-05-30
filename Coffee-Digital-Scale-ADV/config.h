@@ -25,19 +25,24 @@
 #define HISTORY_BUFFER_SIZE         240     // 曲线数据点数（屏幕宽度）
 
 // ========== UI 配色 (RGB565) ==========
-#define COLOR_BG            0x1A1A  // 深灰背景
-#define COLOR_TEXT          0xF5DC  // 暖白文字
-#define COLOR_TEXT_DIM      0x8410  // 暗灰文字
-#define COLOR_ACCENT        0xFF8C  // 琥珀色曲线
-#define COLOR_SUCCESS       0x0F88  // 绿色强调
-#define COLOR_WARNING       0xFBE0  // 黄色警告
+// 深色咖啡主题
+#define COLOR_BG            0x0820  // 深蓝黑背景
+#define COLOR_TEXT          0xF7DE  // 暖白文字
+#define COLOR_TEXT_DIM      0x4208  // 暗灰文字
+#define COLOR_ACCENT        0xFD20  // 琥珀色（咖啡色）
+#define COLOR_SUCCESS       0x07E0  // 绿色
+#define COLOR_WARNING       0xFFE0  // 黄色
+#define COLOR_GRID          0x2124  // 网格线颜色
+#define COLOR_CURVE_WEIGHT  0xFD20  // 重量曲线颜色（琥珀色）
+#define COLOR_CURVE_FLOW    0x07FF  // 流量曲线颜色（青色）
 
 // ========== UI 布局 ==========
 #define SCREEN_WIDTH        240
 #define SCREEN_HEIGHT       135
-#define TITLE_HEIGHT        20
+#define TITLE_HEIGHT        18
 #define WEIGHT_FONT_SIZE    4
 #define NORMAL_FONT_SIZE    2
+#define SMALL_FONT_SIZE     1
 
 // ========== 更新频率 ==========
 #define SENSOR_UPDATE_INTERVAL  100   // 传感器更新间隔 (ms) = 10Hz
