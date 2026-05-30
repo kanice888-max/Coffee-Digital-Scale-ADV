@@ -86,16 +86,13 @@ void DisplayModule::handleInput() {
     M5.update();
 
     // 使用键盘输入（Cardputer 没有传统的 BtnA/BtnB/BtnC）
-    if (M5.Keyboard.isChange()) {
-        if (M5.Keyboard.isPressed()) {
-            // 按 '1' 键切换页面
-            if (M5.Keyboard.isKeyPressed('1')) {
-                Page nextPage = (Page)((_currentPage + 1) % 4);
-                setPage(nextPage);
-            }
-            // 按 '2' 键手动去皮（需要在主程序中处理）
-            // 按 '3' 键开始/停止计时（需要在主程序中处理）
-        }
+    // Cardputer 使用内置键盘，需要通过 Serial 或其他方式检测
+    // 暂时使用简单的时间间隔切换页面（每 10 秒自动切换）
+    static unsigned long lastPageChange = 0;
+    if (millis() - lastPageChange > 10000) {
+        Page nextPage = (Page)((_currentPage + 1) % 4);
+        setPage(nextPage);
+        lastPageChange = millis();
     }
 }
 
@@ -305,7 +302,7 @@ void DisplayModule::_drawStatusBar(float flowRate, TimerModule* timer) {
 
     // 计时
     M5.Lcd.setTextDatum(TR_DATUM);
-    String timeStr = F("Time: ") + timer->getFormattedTime();
+    String timeStr = String("Time: ") + timer->getFormattedTime();
     M5.Lcd.drawString(timeStr, SCREEN_WIDTH - 5, 80);
 }
 

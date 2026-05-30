@@ -1,6 +1,7 @@
 #include "WeightSensor.h"
 
-WeightSensor::WeightSensor() {
+WeightSensor::WeightSensor(uint8_t doutPin, uint8_t sckPin)
+    : _scale(doutPin, sckPin) {
     _calibrationFactor = DEFAULT_CALIBRATION_FACTOR;
     _ready = false;
     _initialized = false;
@@ -14,31 +15,18 @@ WeightSensor::WeightSensor() {
     }
 }
 
-bool WeightSensor::init(uint8_t doutPin, uint8_t sckPin) {
-    // 验证引脚有效性
-    if (doutPin == sckPin) {
-        Serial.println(F("ERROR: DOUT and SCK pins cannot be the same"));
-        return false;
-    }
-
-    _scale.begin(doutPin, sckPin);
+bool WeightSensor::init() {
+    _scale.begin();
 
     // 等待 HX711 就绪（带超时）
     unsigned long startTime = millis();
-    while (!_scale.is_ready()) {
+    while (!_scale.update()) {
         if (millis() - startTime > SENSOR_TIMEOUT_MS) {
             Serial.println(F("ERROR: HX711 init timeout!"));
             _initialized = false;
             return false;
         }
-        yield();  // 允许系统处理其他任务
-    }
-
-    // 启动并稳定
-    if (!_scale.start(2000)) {
-        Serial.println(F("ERROR: HX711 start failed"));
-        _initialized = false;
-        return false;
+        delay(10);
     }
 
     _scale.setCalFactor(_calibrationFactor);
@@ -50,15 +38,11 @@ bool WeightSensor::init(uint8_t doutPin, uint8_t sckPin) {
     return true;
 }
 
-void WeightSensor::tare(int samples) {
+void WeightSensor::tare() {
     if (!_initialized) {
         Serial.println(F("WARNING: Cannot tare - sensor not initialized"));
         return;
     }
-
-    // 验证采样数
-    if (samples < 1) samples = 1;
-    if (samples > 100) samples = 100;
 
     _ready = false;
 
@@ -71,7 +55,7 @@ void WeightSensor::tare(int samples) {
     }
 
     // 执行 tare
-    _scale.tare(samples);
+    _scale.tare();
 
     _ready = true;
     Serial.println(F("Tare complete"));
@@ -81,12 +65,10 @@ float WeightSensor::getWeight() {
     if (!_initialized || !_ready) return 0;
 
     // 更新 HX711 数据
-    if (!_scale.update()) {
-        return _getLastErrorWeight();
-    }
+    _scale.update();
 
     // 获取原始重量
-    float rawWeight = _scale.getUnits();
+    float rawWeight = _scale.getData();
 
     // 应用滤波
     return _applyFilter(rawWeight);
@@ -107,55 +89,6 @@ void WeightSensor::setCalibrationFactor(float factor) {
 
 float WeightSensor::getCalibrationFactor() {
     return _calibrationFactor;
-}
-
-bool WeightSensor::calibrateWithKnownWeight(float knownWeight, int samples) {
-    if (!_initialized) {
-        Serial.println(F("ERROR: Sensor not initialized"));
-        return false;
-    }
-
-    // 验证已知重量
-    if (knownWeight <= 0 || knownWeight > 5000) {
-        Serial.println(F("ERROR: Invalid known weight"));
-        return false;
-    }
-
-    // 验证采样数
-    if (samples < 1) samples = 1;
-    if (samples > 100) samples = 100;
-
-    Serial.println(F("Calibrating..."));
-    Serial.print(F("Place "));
-    Serial.print(knownWeight);
-    Serial.println(F("g on the scale"));
-
-    // 等待稳定
-    delay(2000);
-
-    // 获取原始值
-    _scale.update();
-    float rawValue = _scale.getData();
-
-    // 计算校准因子
-    if (rawValue == 0) {
-        Serial.println(F("ERROR: Raw value is zero"));
-        return false;
-    }
-
-    _calibrationFactor = rawValue / knownWeight;
-
-    // 验证校准因子合理性
-    if (_calibrationFactor < 1 || _calibrationFactor > 10000) {
-        Serial.println(F("ERROR: Calculated calibration factor out of range"));
-        return false;
-    }
-
-    _scale.setCalFactor(_calibrationFactor);
-
-    Serial.print(F("New calibration factor: "));
-    Serial.println(_calibrationFactor);
-    return true;
 }
 
 bool WeightSensor::isReady() {

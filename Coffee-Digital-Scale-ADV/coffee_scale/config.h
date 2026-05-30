@@ -19,7 +19,6 @@
 // ========== 计时参数 ==========
 #define AUTO_START_THRESHOLD        0.5f    // 自动计时触发阈值 (g)
 #define RESET_THRESHOLD             0.3f    // 归零重置阈值 (g)
-#define RESET_DELAY_MS              2000    // 重量归零后延迟重置 (ms)
 
 // ========== 历史数据 ==========
 #define HISTORY_BUFFER_SIZE         240     // 曲线数据点数（屏幕宽度）

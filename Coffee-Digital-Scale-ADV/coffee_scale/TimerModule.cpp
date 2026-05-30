@@ -57,7 +57,7 @@ void TimerModule::checkAutoStart(float weight) {
                 // 刚检测到重量归零，开始计时
                 _weightDetected = false;
                 _weightLostTime = now;
-            } else if (_weightLostTime > 0 && (now - _weightLostTime) > RESET_DELAY_MS) {
+            } else if (_weightLostTime > 0 && (now - _weightLostTime) > RESET_DELAY) {
                 // 重量持续低于阈值超过延迟时间，重置计时器
                 reset();
                 Serial.println(F("Timer auto-reset"));

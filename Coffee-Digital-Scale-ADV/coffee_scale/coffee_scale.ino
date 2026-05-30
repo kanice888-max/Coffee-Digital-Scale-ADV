@@ -26,7 +26,7 @@
 #include "StorageModule.h"
 
 // ========== 全局模块实例 ==========
-WeightSensor weightSensor;
+WeightSensor weightSensor(HX711_DOUT_PIN, HX711_SCK_PIN);
 FlowCalculator flowCalculator;
 TimerModule timerModule;
 DisplayModule displayModule;
@@ -78,7 +78,7 @@ void setup() {
 
     // 初始化传感器模块
     displayModule.showMessage(F("Init Sensor..."), 500);
-    if (!weightSensor.init(HX711_DOUT_PIN, HX711_SCK_PIN)) {
+    if (!weightSensor.init()) {
         displayModule.showMessage(F("Sensor Error!"), 0);
         Serial.println(F("FATAL: HX711 initialization failed"));
         haltSystem();

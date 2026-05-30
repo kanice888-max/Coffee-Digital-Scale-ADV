@@ -6,13 +6,13 @@
 
 class WeightSensor {
 public:
-    WeightSensor();
+    WeightSensor(uint8_t doutPin, uint8_t sckPin);
 
     // 初始化传感器（返回是否成功）
-    bool init(uint8_t doutPin, uint8_t sckPin);
+    bool init();
 
     // 去皮
-    void tare(int samples = 10);
+    void tare();
 
     // 获取滤波后的重量 (g)
     float getWeight();
@@ -20,7 +20,6 @@ public:
     // 校准
     void setCalibrationFactor(float factor);
     float getCalibrationFactor();
-    bool calibrateWithKnownWeight(float knownWeight, int samples = 10);
 
     // 状态
     bool isReady();

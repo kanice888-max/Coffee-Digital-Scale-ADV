@@ -41,7 +41,7 @@ private:
     // 自动重置检测
     bool _weightDetected;
     unsigned long _weightLostTime;
-    static const unsigned long RESET_DELAY_MS = 2000;  // 重量归零后延迟重置
+    static const unsigned long RESET_DELAY = 2000;  // 重量归零后延迟重置 (ms)
 };
 
 #endif
