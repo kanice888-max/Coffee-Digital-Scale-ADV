@@ -15,9 +15,9 @@
 //
 // PAGE_MAIN 布局 240×135 — 基于精确字体高度确保零重叠：
 // [0,  12]  标题 Font0 TC_DATUM y=2 + 分隔线 y=12
-//        ↓ 6px
-// [20, 44]  重量 FreeSerif18pt MC_DATUM y=29 ('0'字底 y=38)
-//        ↓ 6px
+//        ↓ 9px
+// [23, 47]  重量 FreeSerif18pt MC_DATUM y=29 ('0'字底 y=38)
+//        ↓ 3px
 // [50, 53]  进度条 h=3  fillRect(10, 40, 220, 3)
 //        ↓ 6px
 // [59, 76]  信息行 FreeSerif9pt TL_DATUM y=47 (含g字底 y=64)
@@ -225,8 +225,10 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
 
     if (!weightDirty && !flowDirty && !timeDirty && !targetDirty && !curveDirty) return;
 
-    // 始终重绘分隔线 y=79（防止被曲线/信息行清除后不恢复）
-    M5.Lcd.drawFastHLine(0, 79, SCREEN_WIDTH, COLOR_DIVIDER);
+    // 分隔线 y=79：只在曲线或信息行更新时重绘（减少闪烁）
+    if (curveDirty || flowDirty || timeDirty || fullDirty) {
+        M5.Lcd.drawFastHLine(0, 79, SCREEN_WIDTH, COLOR_DIVIDER);
+    }
 
     if (weightDirty) {
         _clearArea(0, 13, SCREEN_WIDTH, 34);
