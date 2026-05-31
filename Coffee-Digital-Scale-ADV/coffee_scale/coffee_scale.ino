@@ -355,20 +355,19 @@ void handleKeyboardInput(DisplayModule* disp) {
         for (auto ch : state.word) {
             if (ch == '1') {
                 syncSettingsInputState();
-                disp->setPage(DisplayModule::PAGE_SETTINGS);
+                DisplayModule::Page nextPage = static_cast<DisplayModule::Page>((page + 1) % 4);
+                disp->setPage(nextPage);
                 return;
             }
             if (ch == '2') {
-                if (!timerModule.isRunning()) {
-                    weightSensor.tare();
-                    flowCalculator.reset();
-                    currentWeight = 0;
-                    currentFlowRate = 0;
-                    targetReached = false;
-                    sensorErrorCount = 0;
-                    displayModule.markMainPageDirty();
-                    Serial.println(F("Manual tare"));
-                }
+                weightSensor.tare();
+                flowCalculator.reset();
+                currentWeight = 0;
+                currentFlowRate = 0;
+                targetReached = false;
+                sensorErrorCount = 0;
+                displayModule.markMainPageDirty();
+                Serial.println(F("Manual tare"));
                 return;
             }
         }
