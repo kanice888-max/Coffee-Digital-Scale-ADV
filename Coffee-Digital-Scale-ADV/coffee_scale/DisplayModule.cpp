@@ -225,9 +225,8 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
 
     if (!weightDirty && !flowDirty && !timeDirty && !targetDirty && !curveDirty) return;
 
-    if (fullDirty) {
-        M5.Lcd.drawFastHLine(0, 79, SCREEN_WIDTH, COLOR_DIVIDER);
-    }
+    // 始终重绘分隔线 y=79（防止被曲线/信息行清除后不恢复）
+    M5.Lcd.drawFastHLine(0, 79, SCREEN_WIDTH, COLOR_DIVIDER);
 
     if (weightDirty) {
         _clearArea(0, 13, SCREEN_WIDTH, 34);
