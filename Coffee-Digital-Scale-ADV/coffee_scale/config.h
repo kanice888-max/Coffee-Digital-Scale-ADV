@@ -9,7 +9,7 @@
 
 // ========== 称重参数 ==========
 #define DEFAULT_CALIBRATION_FACTOR  954.24f  // 1kg HX711 实测 (100g 砝码 display=227.2g → factor=954.24)
-#define FILTER_WINDOW_SIZE          3       // 移动平均窗口大小
+#define FILTER_WINDOW_SIZE          1       // 移动平均窗口大小（1=关闭，依赖 HX711_ADC 内部滤波）
 #define WEIGHT_PRECISION            0.1f    // 重量显示精度 (g)
 
 // ========== 流量参数 ==========
@@ -58,7 +58,7 @@
 #define SMALL_FONT_SIZE     1
 
 // ========== 更新频率 ==========
-#define SENSOR_UPDATE_INTERVAL  50    // 传感器更新间隔 (ms) = 20Hz
+#define SENSOR_UPDATE_INTERVAL  12    // 传感器更新间隔 (ms) ≈ 80Hz
 #define DISPLAY_UPDATE_INTERVAL 100   // 屏幕更新间隔 (ms) = 10Hz
 #define CURVE_UPDATE_INTERVAL   500   // 曲线更新间隔 (ms) = 2Hz
 #define SESSION_CHECK_INTERVAL  5000  // 会话检查间隔 (ms)

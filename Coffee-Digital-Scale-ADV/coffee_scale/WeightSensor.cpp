@@ -31,6 +31,7 @@ bool WeightSensor::init() {
     }
 
     _scale.setCalFactor(_calibrationFactor);
+    _scale.setSamplesInUse(8);  // 减小内部平均窗口，降低延迟
 
     _initialized = true;
     _ready = true;
@@ -93,11 +94,8 @@ bool WeightSensor::update() {
 
     if (!_scale.update()) return false;
 
-    // 获取原始重量
-    float rawWeight = _scale.getData();
-
-    // 应用滤波
-    _currentWeight = _applyFilter(rawWeight);
+    // 获取重量（HX711_ADC 内部已做 8 采样平均，无需再次滤波）
+    _currentWeight = _scale.getData();
     return true;
 }
 
