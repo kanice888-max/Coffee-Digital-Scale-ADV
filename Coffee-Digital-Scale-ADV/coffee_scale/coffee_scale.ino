@@ -70,6 +70,7 @@ void loadSettings();
 void loadCalibration();
 void saveSettings();
 void handleKeyboardInput(DisplayModule* disp);
+void playTargetReachedSound();
 void resetInput();
 bool appendInputChar(char ch);
 bool parseInputFloat(float& value);
@@ -190,6 +191,7 @@ void updateSensor(unsigned long now) {
     // 检查是否达到目标水量
     if (timerRunning && !targetReached && weight >= targetWater && targetWater > 0) {
         targetReached = true;
+        playTargetReachedSound();
     }
 
     // 计时器重置时重置目标状态
@@ -453,6 +455,16 @@ bool parseInputFloat(float& value) {
 void syncSettingsInputState() {
     bool showEditor = inputMode && inputTarget != 'c';
     displayModule.setSettingsInputState(settingsSelectedIndex, showEditor, showEditor ? inputBuffer : "");
+}
+
+// ========== 目标水量到达声音提示 ==========
+void playTargetReachedSound() {
+    M5Cardputer.Speaker.tone(880, 200);
+    delay(250);
+    M5Cardputer.Speaker.tone(1320, 200);
+    delay(250);
+    M5Cardputer.Speaker.tone(1760, 400);
+    Serial.println(F("Target water reached!"));
 }
 
 // ========== 系统停止 ==========
