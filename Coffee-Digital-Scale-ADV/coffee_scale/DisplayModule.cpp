@@ -194,7 +194,19 @@ void DisplayModule::markMainPageDirty() {
 }
 
 // ============================================================
-// PAGE_MAIN · 纸墨印刷风格
+// PAGE_MAIN 布局 240×135 — 基于精确字体高度确保零重叠：
+// [0,  12]  标题 Font0 TC_DATUM y=2 + 分隔线 y=12
+//        ↓ 9px
+// [23, 47]  重量 FreeSerif18pt MC_DATUM y=29 ('0'字底 y=38)
+//        ↓ 3px
+// [50, 53]  进度条 h=3  fillRect(10, 50, 220, 3)
+//        ↓ 6px
+// [59, 76]  信息行 FreeSerif9pt TL_DATUM y=59 (含g字底 y=76)
+//        ↓ 3px
+// [79]      分隔线
+//        ↓ 3px
+//
+// [82, 135] 迷你曲线 53px 黑墨细线
 // ============================================================
 void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* timer, FlowCalculator* flowCalc) {
     unsigned long now = millis();
@@ -218,7 +230,7 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
     }
 
     if (weightDirty) {
-        _clearArea(0, 13, SCREEN_WIDTH, 36);
+        _clearArea(0, 13, SCREEN_WIDTH, 34);
 
         // === 重量 FreeSerif18pt MC_DATUM y=29 ('0': y=14→38) ===
         M5.Lcd.setTextColor(COLOR_TEXT, COLOR_BG);
@@ -238,7 +250,7 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
 
     if (weightDirty || targetDirty) {
         // === 进度条 y:50-53 ===
-        _clearArea(0, 49, SCREEN_WIDTH, 7);
+        _clearArea(0, 48, SCREEN_WIDTH, 5);
         if (_brewTarget > 0 && weight > 0) {
             float pct = weight / _brewTarget;
             if (pct > 1.0f) pct = 1.0f;
@@ -252,7 +264,7 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
     uint16_t rowColor = running ? COLOR_TEXT : COLOR_TEXT_DIM;
 
     if (flowDirty) {
-        _clearArea(0, 56, 128, 23);
+        _clearArea(0, 54, 128, 23);
         char buf[20];
         // flow（左）
         snprintf(buf, sizeof(buf), "flow %.1f", flowRate);
@@ -261,16 +273,16 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
         M5.Lcd.setTextDatum(TL_DATUM);
         M5.Lcd.drawString(buf, 6, 59);
 
-        // g/s
-        M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
-        int flowChars = strlen(buf);
-        M5.Lcd.drawString("g/s", 6 + flowChars * 7, 62);
+        // g/s（用 textWidth 精确测算位置，避免重叠）
+        M5.Lcd.setTextColor(rowColor, COLOR_BG);
+        int flowW = M5.Lcd.textWidth(buf);
+        M5.Lcd.drawString("g/s", 6 + flowW + 3, 62);
     }
 
     if (timeDirty) {
-        _clearArea(128, 56, SCREEN_WIDTH - 128, 23);
+        _clearArea(128, 54, SCREEN_WIDTH - 128, 23);
         M5.Lcd.setFont(&fonts::FreeSerif9pt7b);
-        M5.Lcd.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
+        M5.Lcd.setTextColor(running ? COLOR_TEXT : COLOR_TEXT_DIM, COLOR_BG);
         M5.Lcd.setTextDatum(TR_DATUM);
         char timeBuffer[10];
         timer->formatTime(timeBuffer, sizeof(timeBuffer));
@@ -279,7 +291,7 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
 
     if (curveDirty) {
         // === 迷你曲线 y:82-135 (53px) ===
-        _clearArea(0, 80, SCREEN_WIDTH, 55);
+        _clearArea(0, 79, SCREEN_WIDTH, 56);
         if (count >= 2) {
             float* flows = flowCalc->getFlowHistory();
             float maxFlow = flowCalc->getFlowMax();
