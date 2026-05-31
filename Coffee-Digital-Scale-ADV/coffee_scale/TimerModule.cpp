@@ -79,15 +79,15 @@ unsigned long TimerModule::getElapsedMs() {
     return _elapsed;
 }
 
-String TimerModule::getFormattedTime() {
+void TimerModule::formatTime(char* buffer, size_t bufferSize) {
+    if (bufferSize == 0) return;
+
     unsigned long elapsed = getElapsedMs();
     int minutes = (elapsed / 60000) % 60;
     int seconds = (elapsed / 1000) % 60;
     int tenths = (elapsed / 100) % 10;
 
-    char buffer[10];
-    snprintf(buffer, sizeof(buffer), "%02d:%02d.%d", minutes, seconds, tenths);
-    return String(buffer);
+    snprintf(buffer, bufferSize, "%02d:%02d.%d", minutes, seconds, tenths);
 }
 
 void TimerModule::setAutoStartThreshold(float threshold) {

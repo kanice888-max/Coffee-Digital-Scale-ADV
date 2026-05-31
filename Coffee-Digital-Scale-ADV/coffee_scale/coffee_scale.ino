@@ -7,7 +7,7 @@
  * - 自动计时（重量变化触发）
  * - 重量/流量历史曲线
  * - SD 卡数据记录
- * - 水分比/粉量设置 + 目标水量声音提示
+ * - 水分比/粉量设置 + 目标水量状态提示
  *
  * 硬件：
  * - M5Stack Cardputer-adv (ESP32-S3)
@@ -17,6 +17,7 @@
 
 #include <M5Cardputer.h>
 #include <math.h>
+#include <stdlib.h>
 #include "config.h"
 #include "WeightSensor.h"
 #include "FlowCalculator.h"
@@ -55,8 +56,10 @@ bool targetReached = false;             // 是否已到达目标水量
 
 // ========== 键盘输入状态 ==========
 bool inputMode = false;
-String inputBuffer = "";
-char inputTarget = 0;  // 'r' = ratio, 'd' = dose
+char inputBuffer[16] = "";
+uint8_t inputLength = 0;
+char inputTarget = 0;  // 'r' = ratio, 'd' = dose, 'c' = calibration
+uint8_t settingsSelectedIndex = 0;  // 0 = ratio, 1 = dose
 
 // ========== 函数声明 ==========
 void updateSensor(unsigned long now);
@@ -66,15 +69,16 @@ void checkSensorHealth(float weight);
 void loadSettings();
 void loadCalibration();
 void saveSettings();
-void playTargetReachedSound();
 void handleKeyboardInput(DisplayModule* disp);
+void resetInput();
+bool appendInputChar(char ch);
+bool parseInputFloat(float& value);
+void syncSettingsInputState();
 
 // ========== 初始化 ==========
 void setup() {
     auto cfg = M5.config();
     M5Cardputer.begin(cfg);
-    // 初始化扬声器（M5Cardputer.Speaker 是 M5.Speaker 的别名）
-    M5Cardputer.Speaker.begin();
 
     Serial.begin(115200);
     Serial.println(F("\n=== Coffee Digital Scale ==="));
@@ -117,6 +121,7 @@ void setup() {
     // 切换到主界面
     displayModule.setPage(DisplayModule::PAGE_MAIN);
     displayModule.setBrewParams(waterRatio, coffeeDose, targetWater);
+    displayModule.setCalibrationFactor(weightSensor.getCalibrationFactor());
 
     // 初始化绝对定时器
     nextSensorUpdate = millis() + SENSOR_UPDATE_INTERVAL;
@@ -169,6 +174,8 @@ void loop() {
 
 // ========== 传感器更新 ==========
 void updateSensor(unsigned long now) {
+    if (!weightSensor.update()) return;
+
     float weight = weightSensor.getWeight();
     checkSensorHealth(weight);
     currentWeight = weight;
@@ -176,33 +183,41 @@ void updateSensor(unsigned long now) {
     flowCalculator.update(weight, now);
     currentFlowRate = flowCalculator.getFlowRate();
 
+    bool wasTimerRunning = timerModule.isRunning();
     timerModule.checkAutoStart(weight);
+    bool timerRunning = timerModule.isRunning();
 
     // 检查是否达到目标水量
-    if (timerModule.isRunning() && !targetReached && weight >= targetWater && targetWater > 0) {
+    if (timerRunning && !targetReached && weight >= targetWater && targetWater > 0) {
         targetReached = true;
-        playTargetReachedSound();
     }
 
     // 计时器重置时重置目标状态
-    if (!timerModule.isRunning() && targetReached) {
+    if (!timerRunning && targetReached) {
         targetReached = false;
     }
 
-    if (timerModule.isRunning() && storageModule.isSDReady()) {
+    if (wasTimerRunning && !timerRunning && sessionActive) {
+        storageModule.endSession();
+        sessionActive = false;
+    }
+
+    if (timerRunning && storageModule.isSDReady()) {
         if (!sessionActive) {
-            storageModule.beginNewSession();
-            sessionActive = true;
+            sessionActive = storageModule.beginNewSession();
         }
-        storageModule.logDataPoint(weight, currentFlowRate, timerModule.getElapsedMs());
+        if (sessionActive) {
+            storageModule.logDataPoint(weight, currentFlowRate, timerModule.getElapsedMs());
+        }
     }
 }
 
 // ========== 显示更新 ==========
 void updateDisplay() {
-    displayModule.update(currentWeight, currentFlowRate, &timerModule, &flowCalculator);
     displayModule.setBrewParams(waterRatio, coffeeDose, targetWater);
+    displayModule.setCalibrationFactor(weightSensor.getCalibrationFactor());
     displayModule.setTargetReached(targetReached);
+    displayModule.update(currentWeight, currentFlowRate, &timerModule, &flowCalculator);
 }
 
 // ========== 会话管理 ==========
@@ -232,16 +247,6 @@ void checkSensorHealth(float weight) {
     }
 }
 
-// ========== 目标水量声音提示 ==========
-void playTargetReachedSound() {
-    M5Cardputer.Speaker.tone(880, 200);
-    delay(250);
-    M5Cardputer.Speaker.tone(1320, 200);
-    delay(250);
-    M5Cardputer.Speaker.tone(1760, 400);
-    Serial.println(F("Target water reached!"));
-}
-
 // ========== Cardputer 键盘输入处理 ==========
 void handleKeyboardInput(DisplayModule* disp) {
     if (!M5Cardputer.Keyboard.isChange()) return;
@@ -253,56 +258,92 @@ void handleKeyboardInput(DisplayModule* disp) {
     // === 设置页 ===
     if (page == DisplayModule::PAGE_SETTINGS) {
         if (!inputMode) {
-            // 选择功能模式
+            if (state.enter) {
+                inputMode = true;
+                inputTarget = (settingsSelectedIndex == 0) ? 'r' : 'd';
+                resetInput();
+                syncSettingsInputState();
+                return;
+            }
+
             for (auto ch : state.word) {
                 if (ch == '1') {
                     disp->setPage(DisplayModule::PAGE_MAIN);
                     return;
                 }
-                if (ch == 'r' || ch == 'R') {
-                    inputMode = true;
-                    inputTarget = 'r';
-                    inputBuffer = "";
-                    Serial.println(F("Enter ratio: "));
+                if (ch == ';' || ch == ',') {
+                    settingsSelectedIndex = (settingsSelectedIndex == 0) ? 1 : 0;
+                    syncSettingsInputState();
                     return;
                 }
-                if (ch == 'd' || ch == 'D') {
+                if (ch == '.' || ch == '/') {
+                    settingsSelectedIndex = (settingsSelectedIndex + 1) % 2;
+                    syncSettingsInputState();
+                    return;
+                }
+                if (ch == 'c' || ch == 'C') {
                     inputMode = true;
-                    inputTarget = 'd';
-                    inputBuffer = "";
-                    Serial.println(F("Enter dose (g): "));
+                    inputTarget = 'c';
+                    resetInput();
+                    syncSettingsInputState();
+                    Serial.println(F("Enter known weight (g): "));
                     return;
                 }
             }
         } else {
             // 数字输入模式
             for (auto ch : state.word) {
-                if (ch >= '0' && ch <= '9') {
-                    inputBuffer += ch;
+                if ((ch >= '0' && ch <= '9') || ch == '.') {
+                    appendInputChar(ch);
                 }
             }
             if (state.enter) {
-                float val = inputBuffer.toFloat();
-                if (val > 0) {
+                float val = 0;
+                if (parseInputFloat(val) && val > 0) {
                     if (inputTarget == 'r') {
                         waterRatio = val;
+                        targetWater = waterRatio * coffeeDose;
+                        targetReached = false;
+                        Serial.print(F("Target water: "));
+                        Serial.println(targetWater);
+                        saveSettings();
+                        disp->setBrewParams(waterRatio, coffeeDose, targetWater);
+                        disp->setTargetReached(targetReached);
                     } else if (inputTarget == 'd') {
                         coffeeDose = val;
+                        targetWater = waterRatio * coffeeDose;
+                        targetReached = false;
+                        Serial.print(F("Target water: "));
+                        Serial.println(targetWater);
+                        saveSettings();
+                        disp->setBrewParams(waterRatio, coffeeDose, targetWater);
+                        disp->setTargetReached(targetReached);
+                    } else if (inputTarget == 'c') {
+                        if (weightSensor.calibrateWithKnownWeight(val)) {
+                            displayModule.setCalibrationFactor(weightSensor.getCalibrationFactor());
+                            if (storageModule.isSDReady()) {
+                                storageModule.saveCalibration(weightSensor.getCalibrationFactor());
+                            }
+                        }
                     }
-                    targetWater = waterRatio * coffeeDose;
-                    targetReached = false;
-                    Serial.print(F("Target water: "));
-                    Serial.println(targetWater);
-                    saveSettings();
                 }
                 inputMode = false;
-                inputBuffer = "";
+                resetInput();
+                syncSettingsInputState();
                 return;
             }
-            if (state.del && inputBuffer.length() > 0) {
-                inputBuffer.remove(inputBuffer.length() - 1);
+            if (state.del) {
+                if (inputLength > 0) {
+                    inputLength--;
+                    inputBuffer[inputLength] = '\0';
+                } else {
+                    inputMode = false;
+                    resetInput();
+                }
+                syncSettingsInputState();
                 return;
             }
+            syncSettingsInputState();
         }
         return;
     }
@@ -311,7 +352,21 @@ void handleKeyboardInput(DisplayModule* disp) {
     if (page == DisplayModule::PAGE_MAIN) {
         for (auto ch : state.word) {
             if (ch == '1') {
+                syncSettingsInputState();
                 disp->setPage(DisplayModule::PAGE_SETTINGS);
+                return;
+            }
+            if (ch == '2') {
+                if (!timerModule.isRunning()) {
+                    weightSensor.tare();
+                    flowCalculator.reset();
+                    currentWeight = 0;
+                    currentFlowRate = 0;
+                    targetReached = false;
+                    sensorErrorCount = 0;
+                    displayModule.markMainPageDirty();
+                    Serial.println(F("Manual tare"));
+                }
                 return;
             }
         }
@@ -363,14 +418,48 @@ void saveSettings() {
 void loadCalibration() {
     float calFactor = storageModule.loadCalibration(DEFAULT_CALIBRATION_FACTOR);
     weightSensor.setCalibrationFactor(calFactor);
+    displayModule.setCalibrationFactor(weightSensor.getCalibrationFactor());
     Serial.print(F("Calibration factor: "));
     Serial.println(calFactor);
+}
+
+void resetInput() {
+    inputLength = 0;
+    inputBuffer[0] = '\0';
+}
+
+bool appendInputChar(char ch) {
+    if (inputLength >= sizeof(inputBuffer) - 1) return false;
+
+    if (ch == '.') {
+        for (uint8_t i = 0; i < inputLength; i++) {
+            if (inputBuffer[i] == '.') return false;
+        }
+    }
+
+    inputBuffer[inputLength++] = ch;
+    inputBuffer[inputLength] = '\0';
+    return true;
+}
+
+bool parseInputFloat(float& value) {
+    if (inputLength == 0) return false;
+
+    char* endPtr = nullptr;
+    value = strtof(inputBuffer, &endPtr);
+    return endPtr != inputBuffer && *endPtr == '\0';
+}
+
+void syncSettingsInputState() {
+    bool showEditor = inputMode && inputTarget != 'c';
+    displayModule.setSettingsInputState(settingsSelectedIndex, showEditor, showEditor ? inputBuffer : "");
 }
 
 // ========== 系统停止 ==========
 void haltSystem() {
     Serial.println(F("System halted"));
     while (1) {
-        delay(1000);
+        M5Cardputer.update();
+        yield();
     }
 }

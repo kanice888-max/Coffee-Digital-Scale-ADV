@@ -28,18 +28,18 @@ public:
 
     // 状态
     bool isSDReady();
-    String getCurrentFileName();
+    const char* getCurrentFileName();
     int getSessionDataCount();
 
 private:
     bool _sdReady;
     bool _sessionActive;
     File _dataFile;
-    String _currentFileName;
+    char _currentFileName[64];
     int _dataPointCount;
     int _flushCounter;
 
-    String _generateFileName();
+    void _generateFileName(char* filename, size_t filenameSize);
     bool _ensureDirectory(const char* path);
 };
 

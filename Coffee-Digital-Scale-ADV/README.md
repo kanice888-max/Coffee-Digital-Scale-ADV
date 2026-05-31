@@ -59,14 +59,19 @@ SCK/CLK (绿) →      G1
 
 1. **开机**：设备自动初始化并去皮
 2. **放置咖啡杯**：显示当前重量
-3. **开始注水**：重量超过 0.5g 时自动开始计时
+3. **开始注水**：重量超过 0.3g 时自动开始计时
 4. **查看曲线**：按 '1' 键切换页面
 5. **结束冲煮**：移除咖啡杯，计时自动重置
 
 ### 按键操作
 
 - **'1' 键**：循环切换页面
-- **'2' 键**：手动去皮（待实现）
+- **主界面 '2' 键**：手动去皮（计时运行中忽略，避免误操作）
+- **设置页 ';' / ',' 键**：选择上一个可编辑项
+- **设置页 '.' / '/' 键**：选择下一个可编辑项
+- **设置页 Enter 键**：编辑当前选中的水粉比或粉量
+- **编辑状态数字键**：输入数值，支持小数；Enter 保存，Del 删除/取消
+- **设置页 'c' 键**：放置已知重量后输入砝码重量，保存校准因子
 - **'3' 键**：开始/停止计时（待实现）
 
 ### 页面切换
@@ -81,7 +86,8 @@ SCK/CLK (绿) →      G1
 
 - 每次冲煮自动创建 CSV 文件
 - 文件保存在 `/coffee_data/` 目录
-- 文件名格式：`brew_XXXXX.csv`
+- 文件名格式：`brew_uptime_<millis>.csv`（如遇重名会追加序号）
+- 说明：当前固件不启用 WiFi/NTP，也没有单独 RTC 时间源，因此 Arduino IDE 兼容版先使用开机毫秒数命名；若后续增加可靠实时时钟，可改为 `brew_YYYYMMDD_HHMMSS.csv`
 
 CSV 格式：
 ```csv
@@ -95,19 +101,20 @@ timestamp_ms,weight_g,flow_rate_g_per_s,elapsed_s
 ### 校准
 
 1. 进入设置页面
-2. 选择校准选项
+2. 按 'c' 进入校准输入
 3. 放置已知重量的砝码
 4. 输入砝码重量
-5. 自动计算校准因子
+5. 按 Enter 自动计算并保存校准因子
 
 ## 配置参数
 
 在 `config.h` 中修改：
 
 ```cpp
-#define AUTO_START_THRESHOLD  0.5f   // 自动计时触发阈值 (g)
-#define RESET_THRESHOLD       0.3f   // 归零重置阈值 (g)
-#define FILTER_WINDOW_SIZE    5      // 移动平均窗口大小
+#define AUTO_START_THRESHOLD  0.3f   // 自动计时触发阈值 (g)
+#define RESET_THRESHOLD       0.2f   // 归零重置阈值 (g)
+#define FILTER_WINDOW_SIZE    3      // 移动平均窗口大小
+#define FLOW_WINDOW_MS        750    // 流量计算窗口 (ms)
 #define HISTORY_BUFFER_SIZE   240    // 曲线数据点数
 ```
 

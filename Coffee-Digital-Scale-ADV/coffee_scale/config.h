@@ -8,17 +8,17 @@
 #define HX711_SCK_PIN     1     // G1
 
 // ========== 称重参数 ==========
-#define DEFAULT_CALIBRATION_FACTOR  420.0f  // 默认校准因子，需实际校准
-#define FILTER_WINDOW_SIZE          5       // 移动平均窗口大小
+#define DEFAULT_CALIBRATION_FACTOR  954.24f  // 1kg HX711 实测 (100g 砝码 display=227.2g → factor=954.24)
+#define FILTER_WINDOW_SIZE          3       // 移动平均窗口大小
 #define WEIGHT_PRECISION            0.1f    // 重量显示精度 (g)
 
 // ========== 流量参数 ==========
-#define FLOW_WINDOW_MS              1000    // 流量计算窗口 (ms)
+#define FLOW_WINDOW_MS              750     // 流量计算窗口 (ms)
 #define FLOW_PRECISION              0.1f    // 流量显示精度 (g/s)
 
 // ========== 计时参数 ==========
-#define AUTO_START_THRESHOLD        0.5f    // 自动计时触发阈值 (g)
-#define RESET_THRESHOLD             0.3f    // 归零重置阈值 (g)
+#define AUTO_START_THRESHOLD        0.3f    // 自动计时触发阈值 (g)
+#define RESET_THRESHOLD             0.2f    // 归零重置阈值 (g)
 
 // ========== 冲煮参数 ==========
 #define DEFAULT_RATIO       15.0f   // 默认水分比 1:15
@@ -28,24 +28,25 @@
 #define HISTORY_BUFFER_SIZE         240     // 曲线数据点数（屏幕宽度）
 
 // ========== UI 配色 (RGB565) ==========
-// 方案 B · 暖咖氛围（深褐 + 暖金 + 琥珀）
+// 纸墨印刷 · 白底黑字（纸墨质感，无背景色块）
 // RGB565 转换公式: R5=R*31/255, G6=G*63/255, B5=B*31/255, val=(R5<<11)|(G6<<5)|B5
-#define COLOR_BG            0x20A2  // 深褐背景 #24140D
-#define COLOR_BG_DARK       0x1861  // 更深褐 #1A0D08
-#define COLOR_TEXT          0xF739  // 暖白文字 #F5E6D0
-#define COLOR_TEXT_DIM      0x8BCC  // 棕灰文字 #8A7A60
-#define COLOR_ACCENT        0xD52E  // 暖金色 #D4A574
-#define COLOR_DIVIDER       0x3943  // 深褐分隔 #3D2A1A
-#define COLOR_GRID          0x20A2  // 网格线颜色（同 BG）
-#define COLOR_CURVE_WEIGHT  0xD52E  // 重量曲线暖金
-#define COLOR_CURVE_FLOW    0xFC68  // 流量曲线橙琥珀 #FF8C42
-#define COLOR_STATUS_ON     0xC4AD  // 运行状态暖色 #C4956A
-#define COLOR_STATUS_OFF    0x3943  // 停止状态暗褐 #3A2A1A
-#define COLOR_SUCCESS       0x25F0  // 目标达成青绿色 #1FC080
-#define COLOR_TARGET        0x25F0  // 目标水量进度颜色（同 SUCCESS）
+#define COLOR_BG            0xF79D  // 纸白底色      #F5F2ED → #F7F3EF
+#define COLOR_BG_DARK       0xE73B  // 浅灰条        #EAE5DE → #E6E7DE
+#define COLOR_BG_MID        0xDED9  // 中灰条        #E0D9D0 → #DEDBCE
+#define COLOR_TEXT          0x18C3  // 黑墨文字      #1A1816 → #191819
+#define COLOR_TEXT_DIM      0x8C0E  // 灰文字        #8A8075 → #8C8273
+#define COLOR_ACCENT        0x18C3  // 黑墨 accent   同 TEXT
+#define COLOR_DIVIDER       0xCE37  // 浅灰分隔线    #D0C8BE → #CEC6BD
+#define COLOR_GRID          0xCE37  // 网格线
+#define COLOR_CURVE_WEIGHT  0x18C3  // 重量曲线黑墨
+#define COLOR_CURVE_FLOW    0x18C3  // 流量曲线黑墨
+#define COLOR_STATUS_ON     0x18C3  // 运行状态黑
+#define COLOR_STATUS_OFF    0xBDB5  // 停止状态灰    #C0B8AE → #BDB6AD
+#define COLOR_SUCCESS       0x2B47  // 目标达成绿    #2A6A3A → #29693A
+#define COLOR_BAR_BG        0xCE37  // 进度条灰
 
 // ========== 演示模式 ==========
-#define DEMO_MODE           1       // 1=无传感器模拟演示, 0=正式硬件模式
+#define DEMO_MODE           0       // 1=无传感器模拟演示, 0=正式硬件模式
 // 注意：正式使用 HX711 时请将 DEMO_MODE 改为 0
 
 // ========== UI 布局 ==========
@@ -57,7 +58,7 @@
 #define SMALL_FONT_SIZE     1
 
 // ========== 更新频率 ==========
-#define SENSOR_UPDATE_INTERVAL  100   // 传感器更新间隔 (ms) = 10Hz
+#define SENSOR_UPDATE_INTERVAL  50    // 传感器更新间隔 (ms) = 20Hz
 #define DISPLAY_UPDATE_INTERVAL 100   // 屏幕更新间隔 (ms) = 10Hz
 #define CURVE_UPDATE_INTERVAL   500   // 曲线更新间隔 (ms) = 2Hz
 #define SESSION_CHECK_INTERVAL  5000  // 会话检查间隔 (ms)

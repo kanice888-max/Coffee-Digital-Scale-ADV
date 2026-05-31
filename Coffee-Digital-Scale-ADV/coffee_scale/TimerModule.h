@@ -19,7 +19,7 @@ public:
     // 获取状态
     bool isRunning();
     unsigned long getElapsedMs();
-    String getFormattedTime();  // 返回 "MM:SS.s" 格式
+    void formatTime(char* buffer, size_t bufferSize);  // 写入 "MM:SS.s" 格式
 
     // 配置
     void setAutoStartThreshold(float threshold);

@@ -14,12 +14,14 @@ public:
     // 去皮
     void tare();
 
-    // 获取滤波后的重量 (g)
+    // 更新并获取滤波后的重量 (g)
+    bool update();
     float getWeight();
 
     // 校准
     void setCalibrationFactor(float factor);
     float getCalibrationFactor();
+    bool calibrateWithKnownWeight(float knownWeight);
 
     // 状态
     bool isReady();
@@ -27,6 +29,7 @@ public:
 private:
     HX711_ADC _scale;
     float _calibrationFactor;
+    float _currentWeight;
     bool _ready;
     bool _initialized;
 

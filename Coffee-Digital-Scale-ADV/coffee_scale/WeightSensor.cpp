@@ -3,6 +3,7 @@
 WeightSensor::WeightSensor(uint8_t doutPin, uint8_t sckPin)
     : _scale(doutPin, sckPin) {
     _calibrationFactor = DEFAULT_CALIBRATION_FACTOR;
+    _currentWeight = 0;
     _ready = false;
     _initialized = false;
     _filterIndex = 0;
@@ -26,7 +27,7 @@ bool WeightSensor::init() {
             _initialized = false;
             return false;
         }
-        delay(10);
+        yield();
     }
 
     _scale.setCalFactor(_calibrationFactor);
@@ -57,40 +58,47 @@ void WeightSensor::tare() {
     // 执行 tare
     _scale.tare();
 
+    _currentWeight = 0;
     _ready = true;
     Serial.println(F("Tare complete"));
 }
 
 float WeightSensor::getWeight() {
+    if (!_initialized || !_ready) return _getLastErrorWeight();
+    return _currentWeight;
+}
+
+bool WeightSensor::update() {
 #if DEMO_MODE
     if (!_initialized) {
         // ========== 模拟注水曲线（无需 HX711 即可测试 UI） ==========
-        unsigned long t = millis() / 1000;  // 运行秒数
+        float t = millis() / 1000.0f;  // 运行秒数
 
         if (t < 5) {
-            return 0.0f;                       // 0-5s: 空杯
+            _currentWeight = 0.0f;                       // 0-5s: 空杯
         } else if (t < 20) {
-            return (t - 5) * 250.0f / 15.0f;   // 5-20s: 0→250g 注水
+            _currentWeight = (t - 5) * 250.0f / 15.0f;   // 5-20s: 0→250g 注水
         } else if (t < 25) {
-            return 250.0f;                      // 20-25s: 闷蒸
+            _currentWeight = 250.0f;                      // 20-25s: 闷蒸
         } else if (t < 35) {
-            return 250.0f - (t - 25) * 30.0f;   // 25-35s: 下降 250→-50
+            _currentWeight = 250.0f - (t - 25) * 30.0f;   // 25-35s: 下降 250→-50
         } else {
-            return 200.0f;                      // 35s+: 稳定
+            _currentWeight = 200.0f;                      // 35s+: 稳定
         }
+        return true;
     }
 #endif
 
-    if (!_initialized || !_ready) return _getLastErrorWeight();
+    if (!_initialized || !_ready) return false;
 
-    // 更新 HX711 数据
-    _scale.update();
+    if (!_scale.update()) return false;
 
     // 获取原始重量
     float rawWeight = _scale.getData();
 
     // 应用滤波
-    return _applyFilter(rawWeight);
+    _currentWeight = _applyFilter(rawWeight);
+    return true;
 }
 
 void WeightSensor::setCalibrationFactor(float factor) {
@@ -108,6 +116,41 @@ void WeightSensor::setCalibrationFactor(float factor) {
 
 float WeightSensor::getCalibrationFactor() {
     return _calibrationFactor;
+}
+
+bool WeightSensor::calibrateWithKnownWeight(float knownWeight) {
+    if (!_initialized || !_ready || knownWeight <= 0) {
+        Serial.println(F("WARNING: Cannot calibrate"));
+        return false;
+    }
+
+    _ready = false;
+    if (!_scale.refreshDataSet()) {
+        _ready = true;
+        Serial.println(F("WARNING: Calibration data refresh failed"));
+        return false;
+    }
+
+    float newFactor = _scale.getNewCalibration(knownWeight);
+    if (newFactor <= 0 || newFactor > 10000) {
+        _ready = true;
+        Serial.println(F("WARNING: Invalid calibration result"));
+        return false;
+    }
+
+    _calibrationFactor = newFactor;
+    _filterIndex = 0;
+    _filterSum = 0;
+    _filterFull = false;
+    for (int i = 0; i < FILTER_WINDOW_SIZE; i++) {
+        _filterBuffer[i] = 0;
+    }
+    _currentWeight = 0;
+
+    _ready = true;
+    Serial.print(F("Calibration updated: "));
+    Serial.println(_calibrationFactor);
+    return true;
 }
 
 bool WeightSensor::isReady() {

@@ -1,8 +1,44 @@
 #include "StorageModule.h"
+#include <stdlib.h>
+#include <string.h>
+
+static bool readFileText(File& file, char* buffer, size_t bufferSize) {
+    if (bufferSize == 0) return false;
+
+    size_t index = 0;
+    while (file.available() && index < bufferSize - 1) {
+        buffer[index++] = (char)file.read();
+    }
+    buffer[index] = '\0';
+    return index > 0 && !file.available();
+}
+
+static bool readFloatField(const char* content, const char* key, float& value) {
+    const char* start = strstr(content, key);
+    if (start == nullptr) return false;
+
+    start += strlen(key);
+    while (*start == ' ' || *start == '\t') start++;
+
+    const char* end = start;
+    while (*end != '\0' && *end != ',' && *end != '}') end++;
+    if (end <= start) return false;
+
+    char fieldValue[20];
+    size_t length = end - start;
+    if (length >= sizeof(fieldValue)) return false;
+    memcpy(fieldValue, start, length);
+    fieldValue[length] = '\0';
+
+    char* endPtr = nullptr;
+    value = strtof(fieldValue, &endPtr);
+    return endPtr != fieldValue && *endPtr == '\0';
+}
 
 StorageModule::StorageModule() {
     _sdReady = false;
     _sessionActive = false;
+    _currentFileName[0] = '\0';
     _dataPointCount = 0;
     _flushCounter = 0;
 }
@@ -55,7 +91,7 @@ bool StorageModule::beginNewSession() {
     // 结束之前的会话
     endSession();
 
-    _currentFileName = _generateFileName();
+    _generateFileName(_currentFileName, sizeof(_currentFileName));
     Serial.print(F("Creating log file: "));
     Serial.println(_currentFileName);
 
@@ -152,20 +188,17 @@ float StorageModule::loadCalibration(float defaultFactor) {
         return defaultFactor;
     }
 
-    String content = file.readString();
+    char content[64];
+    bool readOk = readFileText(file, content, sizeof(content));
     file.close();
 
-    // 简单解析 JSON
-    int startIndex = content.indexOf(F("calibration_factor\":")) + 20;
-    int endIndex = content.indexOf(F("}"), startIndex);
-
-    if (startIndex > 20 && endIndex > startIndex) {
-        float factor = content.substring(startIndex, endIndex).toFloat();
-        if (factor > 0 && factor < 10000) {
-            Serial.print(F("Calibration loaded: "));
-            Serial.println(factor);
-            return factor;
-        }
+    float factor = defaultFactor;
+    if (readOk &&
+        readFloatField(content, "\"calibration_factor\":", factor) &&
+        factor > 0 && factor < 10000) {
+        Serial.print(F("Calibration loaded: "));
+        Serial.println(factor);
+        return factor;
     }
 
     Serial.println(F("Failed to parse calibration, using default"));
@@ -178,8 +211,9 @@ bool StorageModule::saveSettings(float autoStartThreshold, float resetThreshold,
 
     // 验证阈值范围
     if (autoStartThreshold < 0 || autoStartThreshold > 100 ||
-        resetThreshold < 0 || resetThreshold > 100) {
-        Serial.println(F("ERROR: Invalid threshold values"));
+        resetThreshold < 0 || resetThreshold > 100 ||
+        ratio <= 0 || dose <= 0) {
+        Serial.println(F("ERROR: Invalid settings values"));
         return false;
     }
 
@@ -220,47 +254,50 @@ bool StorageModule::loadSettings(float& autoStartThreshold, float& resetThreshol
         return false;
     }
 
-    String content = file.readString();
+    char content[128];
+    bool readOk = readFileText(file, content, sizeof(content));
     file.close();
 
-    // 简单解析 JSON
-    int startIdx = content.indexOf(F("auto_start_threshold\":")) + 22;
-    int endIdx = content.indexOf(F(","), startIdx);
+    float loadedAutoStart = autoStartThreshold;
+    float loadedReset = resetThreshold;
+    float loadedRatio = ratio;
+    float loadedDose = dose;
 
-    if (startIdx > 22 && endIdx > startIdx) {
-        float value = content.substring(startIdx, endIdx).toFloat();
-        if (value >= 0 && value <= 100) {
-            autoStartThreshold = value;
-        }
+    bool parsed = readOk &&
+        readFloatField(content, "\"auto_start_threshold\":", loadedAutoStart) &&
+        readFloatField(content, "\"reset_threshold\":", loadedReset) &&
+        readFloatField(content, "\"ratio\":", loadedRatio) &&
+        readFloatField(content, "\"dose\":", loadedDose);
+
+    if (!parsed ||
+        loadedAutoStart < 0 || loadedAutoStart > 100 ||
+        loadedReset < 0 || loadedReset > 100 ||
+        loadedRatio <= 0 || loadedDose <= 0) {
+        Serial.println(F("Failed to parse settings, using defaults"));
+        return false;
     }
 
-    startIdx = content.indexOf(F("reset_threshold\":")) + 17;
-    endIdx = content.indexOf(F("}"), startIdx);
+    autoStartThreshold = loadedAutoStart;
+    resetThreshold = loadedReset;
+    ratio = loadedRatio;
+    dose = loadedDose;
 
-    if (startIdx > 17 && endIdx > startIdx) {
-        float value = content.substring(startIdx, endIdx).toFloat();
-        if (value >= 0 && value <= 100) {
-            resetThreshold = value;
-        }
-    }
-
-    // 只有成功解析到至少一个值才返回 true
-    if (autoStartThreshold != 0 || resetThreshold != 0) {
-        Serial.print(F("Settings loaded: auto_start="));
-        Serial.print(autoStartThreshold);
-        Serial.print(F(", reset="));
-        Serial.println(resetThreshold);
-        return true;
-    }
-
-    return false;
+    Serial.print(F("Settings loaded: auto_start="));
+    Serial.print(autoStartThreshold);
+    Serial.print(F(", reset="));
+    Serial.print(resetThreshold);
+    Serial.print(F(", ratio="));
+    Serial.print(ratio);
+    Serial.print(F(", dose="));
+    Serial.println(dose);
+    return true;
 }
 
 bool StorageModule::isSDReady() {
     return _sdReady;
 }
 
-String StorageModule::getCurrentFileName() {
+const char* StorageModule::getCurrentFileName() {
     return _currentFileName;
 }
 
@@ -268,11 +305,23 @@ int StorageModule::getSessionDataCount() {
     return _dataPointCount;
 }
 
-String StorageModule::_generateFileName() {
-    // 使用 millis() 作为文件名的一部分
-    char filename[40];
-    snprintf(filename, sizeof(filename), "%s/brew_%lu.csv", DATA_LOG_DIR, millis());
-    return String(filename);
+void StorageModule::_generateFileName(char* filename, size_t filenameSize) {
+    unsigned long uptime = millis();
+    if (filenameSize == 0) return;
+
+    for (int suffix = 0; suffix < 100; suffix++) {
+        if (suffix == 0) {
+            snprintf(filename, filenameSize, "%s/brew_uptime_%lu.csv",
+                     DATA_LOG_DIR, uptime);
+        } else {
+            snprintf(filename, filenameSize, "%s/brew_uptime_%lu_%02d.csv",
+                     DATA_LOG_DIR, uptime, suffix);
+        }
+
+        if (!SD.exists(filename)) {
+            return;
+        }
+    }
 }
 
 bool StorageModule::_ensureDirectory(const char* path) {
@@ -281,4 +330,3 @@ bool StorageModule::_ensureDirectory(const char* path) {
     }
     return true;
 }
-

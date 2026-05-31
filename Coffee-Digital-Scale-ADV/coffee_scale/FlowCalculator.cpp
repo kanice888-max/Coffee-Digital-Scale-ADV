@@ -3,13 +3,7 @@
 FlowCalculator::FlowCalculator() {
     _bufferIndex = 0;
     _bufferCount = 0;
-    _lastWeight = 0;
-    _lastTimestamp = 0;
     _currentFlowRate = 0;
-
-    _flowWindowIndex = 0;
-    _flowWindowSum = 0;
-    _flowWindowFull = false;
 
     _weightMin = 0;
     _weightMax = 0;
@@ -24,38 +18,30 @@ FlowCalculator::FlowCalculator() {
         _flowBuffer[i] = 0;
         _timeBuffer[i] = 0;
     }
-    for (int i = 0; i < FLOW_WINDOW_SIZE; i++) {
-        _flowWindow[i] = 0;
-    }
 }
 
 void FlowCalculator::update(float weight, unsigned long timestamp) {
-    // 计算瞬时流量
-    if (_lastTimestamp > 0) {
-        unsigned long dt = timestamp - _lastTimestamp;
-        if (dt > 0 && dt < 10000) {  // 避免除以极小值和异常大的时间差
-            float instantFlow = (weight - _lastWeight) * 1000.0f / dt;  // g/s
+    if (_bufferCount > 0) {
+        int startIndex = (_bufferCount < HISTORY_BUFFER_SIZE) ? 0 : _bufferIndex;
+        int windowIndex = startIndex;
+        unsigned long targetTime = (timestamp > FLOW_WINDOW_MS) ? timestamp - FLOW_WINDOW_MS : 0;
 
-            // 滑动窗口平均
-            _flowWindowSum -= _flowWindow[_flowWindowIndex];
-            _flowWindow[_flowWindowIndex] = instantFlow;
-            _flowWindowSum += instantFlow;
-            _flowWindowIndex = (_flowWindowIndex + 1) % FLOW_WINDOW_SIZE;
-
-            if (!_flowWindowFull && _flowWindowIndex == 0) {
-                _flowWindowFull = true;
-            }
-
-            if (_flowWindowFull) {
-                _currentFlowRate = _flowWindowSum / FLOW_WINDOW_SIZE;
+        for (int i = 0; i < _bufferCount; i++) {
+            int idx = (startIndex + i) % HISTORY_BUFFER_SIZE;
+            if (_timeBuffer[idx] <= targetTime) {
+                windowIndex = idx;
             } else {
-                _currentFlowRate = _flowWindowSum / (_flowWindowIndex > 0 ? _flowWindowIndex : 1);
+                break;
             }
         }
-    }
 
-    _lastWeight = weight;
-    _lastTimestamp = timestamp;
+        unsigned long dt = timestamp - _timeBuffer[windowIndex];
+        if (dt > 0 && dt < 10000) {
+            _currentFlowRate = (weight - _weightBuffer[windowIndex]) * 1000.0f / dt;
+        } else {
+            _currentFlowRate = 0;
+        }
+    }
 
     // 存入环形缓冲区
     _weightBuffer[_bufferIndex] = weight;
@@ -127,13 +113,7 @@ int FlowCalculator::getChronologicalIndex(int logicalIndex) {
 void FlowCalculator::reset() {
     _bufferIndex = 0;
     _bufferCount = 0;
-    _lastWeight = 0;
-    _lastTimestamp = 0;
     _currentFlowRate = 0;
-
-    _flowWindowIndex = 0;
-    _flowWindowSum = 0;
-    _flowWindowFull = false;
 
     _weightMin = 0;
     _weightMax = 0;
@@ -146,9 +126,6 @@ void FlowCalculator::reset() {
         _weightBuffer[i] = 0;
         _flowBuffer[i] = 0;
         _timeBuffer[i] = 0;
-    }
-    for (int i = 0; i < FLOW_WINDOW_SIZE; i++) {
-        _flowWindow[i] = 0;
     }
 }
 

@@ -43,16 +43,7 @@ private:
     int _bufferCount;
 
     // 流量计算
-    float _lastWeight;
-    unsigned long _lastTimestamp;
     float _currentFlowRate;
-
-    // 滑动窗口平均（约 1 秒）
-    static const int FLOW_WINDOW_SIZE = 10;
-    float _flowWindow[FLOW_WINDOW_SIZE];
-    int _flowWindowIndex;
-    float _flowWindowSum;
-    bool _flowWindowFull;
 
     // 统计值
     float _weightMin;
