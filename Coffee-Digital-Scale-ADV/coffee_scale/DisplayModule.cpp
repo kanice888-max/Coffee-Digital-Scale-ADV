@@ -18,12 +18,11 @@
 //        ↓ 9px
 // [23, 47]  重量 FreeSerif18pt MC_DATUM y=29 ('0'字底 y=38)
 //        ↓ 3px
-// [50, 53]  进度条 h=3  fillRect(10, 40, 220, 3)
+// [50, 53]  进度条 h=3  fillRect(10, 50, 220, 3)
 //        ↓ 6px
 // [59, 76]  信息行 FreeSerif9pt TL_DATUM y=47 (含g字底 y=64)
 //        ↓ 3px
-// [79]      分隔线
-//        ↓ 3px
+# [79]      （无分隔线）
 //
 // [82, 135] 迷你曲线 55px 黑墨细线
 //
@@ -203,8 +202,7 @@ void DisplayModule::markMainPageDirty() {
 //        ↓ 6px
 // [59, 76]  信息行 FreeSerif9pt TL_DATUM y=59 (含g字底 y=76)
 //        ↓ 3px
-// [79]      分隔线
-//        ↓ 3px
+# [79]      （无分隔线）
 //
 // [82, 135] 迷你曲线 53px 黑墨细线
 // ============================================================
@@ -225,10 +223,7 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
 
     if (!weightDirty && !flowDirty && !timeDirty && !targetDirty && !curveDirty) return;
 
-    // 分隔线 y=79：只在曲线或信息行更新时重绘（减少闪烁）
-    if (curveDirty || flowDirty || timeDirty || fullDirty) {
-        M5.Lcd.drawFastHLine(0, 79, SCREEN_WIDTH, COLOR_DIVIDER);
-    }
+    // 分隔线已移除
 
     if (weightDirty) {
         _clearArea(0, 13, SCREEN_WIDTH, 34);
@@ -292,7 +287,7 @@ void DisplayModule::_drawMainPage(float weight, float flowRate, TimerModule* tim
 
     if (curveDirty) {
         // === 迷你曲线 y:82-135 (53px) ===
-        _clearArea(0, 79, SCREEN_WIDTH, 56);
+        _clearArea(0, 80, SCREEN_WIDTH, 55);
         if (count >= 2) {
             float* flows = flowCalc->getFlowHistory();
             float maxFlow = flowCalc->getFlowMax();
