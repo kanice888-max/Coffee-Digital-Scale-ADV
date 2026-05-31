@@ -53,6 +53,10 @@ float waterRatio = DEFAULT_RATIO;       // 水分比（如 1:15）
 float coffeeDose = DEFAULT_DOSE;        // 粉量 (g)
 float targetWater = 0;                  // 目标注水量 (g)
 bool targetReached = false;             // 是否已到达目标水量
+unsigned long lastBeepSegment = 0;        // 上次提醒的 30 秒段
+float stableCheckWeight = 0;              // 稳定检测起始重量
+unsigned long stableCheckStart = 0;        // 稳定检测开始时间
+bool stableCheckActive = false;           // 是否在稳定检测中
 
 // ========== 键盘输入状态 ==========
 bool inputMode = false;
@@ -188,15 +192,45 @@ void updateSensor(unsigned long now) {
     timerModule.checkAutoStart(weight);
     bool timerRunning = timerModule.isRunning();
 
-    // 检查是否达到目标水量
+    // === 每 30 秒蜂鸣提醒 ===
+    if (timerRunning) {
+        unsigned long seg = timerModule.getElapsedMs() / 30000;
+        if (seg > 0 && seg != lastBeepSegment) {
+            lastBeepSegment = seg;
+            M5Cardputer.Speaker.tone(1760, 150);
+        }
+    }
+
+    // === 检查是否达到目标水量 ===
     if (timerRunning && !targetReached && weight >= targetWater && targetWater > 0) {
         targetReached = true;
+        stableCheckWeight = weight;
+        stableCheckStart = millis();
+        stableCheckActive = true;
         playTargetReachedSound();
     }
 
-    // 计时器重置时重置目标状态
-    if (!timerRunning && targetReached) {
+    // === 目标达成后：5 秒重量无变化则停止计时 ===
+    if (timerRunning && targetReached && stableCheckActive) {
+        if (fabs(weight - stableCheckWeight) < 0.5f) {
+            if (millis() - stableCheckStart >= 5000) {
+                timerModule.stop();
+                // stop() 不重置 elapsed，由 checkAutoStart 下次触发后重置
+                stableCheckActive = false;
+                Serial.println(F("Stable weight - timer stopped"));
+            }
+        } else {
+            // 重量还在变化，重置稳定计时
+            stableCheckWeight = weight;
+            stableCheckStart = millis();
+        }
+    }
+
+    // 计时器重置时重置目标状态和提醒段
+    if (!timerRunning && (targetReached || lastBeepSegment > 0)) {
         targetReached = false;
+        stableCheckActive = false;
+        lastBeepSegment = 0;
     }
 
     if (wasTimerRunning && !timerRunning && sessionActive) {
